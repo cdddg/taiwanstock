@@ -7,13 +7,12 @@ python3 main.py
 
 ```python
 if __name__ == "__main__":
-    start, end = dt.datetime(2016, 1, 1), dt.datetime(2020, 2, 3)
+    client = stock.client.TaiwanStockClient(None)
+
+    start, end = dt.datetime(2020, 2, 3), dt.datetime(2020, 2, 3)
+
     while 1:
-        print('-* ' * 30)
-        print(start)
-        date = start.strftime('%Y%m%d')
-        downloader(date)
-        cleaner(date)
+        client.fetch_to_csv(start.year, start.month, start.day)
         if start < end:
             start += dt.relativedelta(days=1)
         else:
