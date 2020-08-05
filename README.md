@@ -1,12 +1,56 @@
 # 台灣上市上櫃股票爬蟲
-### 抓取每日盤後交易資訊以及三大法人交易資訊
+
+抓取台股每日盤後及三大法人交易資訊\
+Fetch trading information of Taiwan stocks
 
 ```python
 from . import stock
 
-client = stock.client.TaiwanStockClient(None)
-client.fetch_to_csv(2020, 1, 1)
+client = stock.client.TaiwanStockClient()
 ```
 
-資料來源 [台灣證券交易所](https://www.twse.com.tw/zh/), [證券櫃檯買賣中心](https://www.tpex.org.tw/web/?l=zh-tw)
+<br>
+
+Download csv file
+
+```python
+client.fetch_to_csv(year, month, day)
+```
+
+<br>
+
+Insert to Sqlite
+
+```python
+client.fetch_to_sqlite(
+    year,
+    month,
+    day,
+    database_name
+)
+```
+
+<br>
+
+Insert to Mysql
+
+```python
+client.fetch_to_mysql(
+    year,
+    month,
+    day,
+    database_name,
+    host,
+    user,
+    password,
+    port
+)
+```
+
+<br>
+
+## Requirements
+
+- [x] pip install -r `requestment.txt`
+- [x] python version >= `3.6+`
 

@@ -1,4 +1,4 @@
-from . import client
+from . import client, orm
 
 
-__all__ = [client]
+__all__ = [client, orm]

@@ -118,7 +118,6 @@ class TWSEFetcher(BaseFetcher):
             },
             headers=self.HEADERS
         )
-        print(resp.url)
         rawdata = resp.json()
         if rawdata['stat'] == '很抱歉，沒有符合條件的資料!':
             raise HolidayWarning(date)
