@@ -1,10 +1,12 @@
-import urllib
-import requests
 import re
-from .base import BaseFetcher
-from ..foundation.exceptions import HolidayWarning
+import urllib
 from datetime import datetime
 from time import sleep
+
+import requests
+
+from ..foundation.exceptions import HolidayWarning
+from .base import BaseFetcher
 
 
 class TWSEFetcher(BaseFetcher):

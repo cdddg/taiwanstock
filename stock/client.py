@@ -2,10 +2,9 @@ import csv
 import datetime
 import json
 import os
+from typing import Dict, List
 
 import pymysql
-
-from typing import Dict, List
 
 from .box import tpex, twse
 from .foundation.decorator import monitor
