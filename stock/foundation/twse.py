@@ -5,24 +5,25 @@ from time import sleep
 
 import requests
 
-from ..foundation.exceptions import HolidayWarning
+from ..box.exceptions import HolidayWarning
 from .base import BaseFetcher
 
 
 class TWSEFetcher(BaseFetcher):
     TWSE_BASE_URL = 'http://www.twse.com.tw/'
 
-    def __init__(self):
+    def __init__(self, sleep_second: int = 3):
+        self.sleep_second = sleep_second
         pass
 
     def __adapter(self, date):
-        sleep(3)
+        sleep(self.sleep_second)
         if date < '20040211':
             raise NotImplementedError
         else:
             price = self.__price_20040211_now(date)
 
-        sleep(3)
+        sleep(self.sleep_second)
         if date < '20120502':
             raise NotImplementedError
         else:
@@ -34,6 +35,11 @@ class TWSEFetcher(BaseFetcher):
         return str(int(x) + int(y))
 
     def __price_20040211_now(self, date):
+        '''
+        台灣證券交易所 每日收盤行情
+            -- 本資訊自 民國93年2月11日 起提供
+            -- https://www.twse.com.tw/exchangeReport/MI_INDEX
+        '''
         # 本資訊自民國93年2月11日起提供
         resp = requests.get(
             url=urllib.parse.urljoin(self.TWSE_BASE_URL, 'exchangeReport/MI_INDEX'),
@@ -111,6 +117,11 @@ class TWSEFetcher(BaseFetcher):
         return data
 
     def __institutional_investors_20120502_now(self, date):
+        '''
+        台灣證券交易所 三大法人買賣超日報
+            -- 本資訊自 民國101年5月2日 起提供
+            -- https://www.twse.com.tw/zh/page/trading/fund/T86.html
+        '''
         resp = requests.get(
             url=urllib.parse.urljoin(self.TWSE_BASE_URL, 'fund/T86'),
             params={

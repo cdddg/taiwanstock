@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import pymysql
 
-from .box import tpex, twse
-from .foundation.decorator import monitor
+from .foundation import tpex, twse
+from .box.decorator import monitor
 from .orm import adapter, models
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +29,7 @@ class TaiwanStockClient:
         return rawdata
 
     def fetch_to_csv(self, year: int, month: int, day: int, path: str = None):
-        if path is not None:
+        if path is None:
             directrory = os.path.join(PATH, 'rawdata')
             if not os.path.isdir(directrory):
                 os.mkdir(directrory)
@@ -98,7 +98,7 @@ class TaiwanStockClient:
         raise NotImplementedError
 
     def get_holidays_to_csv(self):
-        with open(os.path.join(PATH, 'foundation', 'holidays.json'), 'w+') as f:
+        with open(os.path.join(PATH, 'box', 'holidays.json'), 'w+') as f:
             json.dump(
                 obj={
                     'update': str(datetime.datetime.now()),

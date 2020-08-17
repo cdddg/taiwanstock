@@ -5,3 +5,7 @@ class HolidayWarning(Exception):
 
     def __str__(self):
         return f'{self.date} is holiday'
+
+
+class DateFormatError(Exception):
+    pass

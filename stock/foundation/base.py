@@ -1,7 +1,10 @@
+import datetime
 import itertools
 
+from ..box.exceptions import DateFormatError
 
-class BaseFetcher:
+
+class BaseFetcher():
     HEADERS = {
         'User-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:33.0) Gecko/20100101 Firefox/33.0',
         'Accept-Encoding': 'gzip, deflate, compress'
@@ -9,6 +12,16 @@ class BaseFetcher:
 
     def __init__(self):
         pass
+
+    def __check_date_format(self, date: str):
+        try:
+            formatted = datetime.datetime.strptime(date, '%Y%m%d').strftime('%Y%m%d')
+            if formatted != date:
+                raise ValueError('{formatted} != {date}')
+            else:
+                return formatted
+        except ValueError as e:
+            raise DateFormatError from e
 
     @property
     def columns(self):
@@ -38,14 +51,23 @@ class BaseFetcher:
         ]
 
     def republic_era_datetime(self, date):
-        year = int(date[0:4]) - 1911
+        date = self.__check_date_format(date)
+        year = str(int(date[0:4]) - 1911)
         month = date[4:6]
         day = date[6:8]
         return year, month, day
 
     def clean(self, value):
         if type(value) is str:
-            value = None if '--' in value else value.replace(',', '').strip()
+            if '--' in value:
+                value = None
+            else:
+                value = value.replace(',', '') \
+                    .replace('⊕', '') \
+                    .replace('⊙', '') \
+                    .replace('+ ', '+') \
+                    .replace('- ', '-') \
+                    .strip()
         return value
 
     def combine(self, date: str, price: dict, institutional_investors: dict) -> list:
