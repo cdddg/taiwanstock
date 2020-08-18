@@ -6,6 +6,8 @@
 from . import stock
 
 client = stock.client.TaiwanStockClient()
+print(client.__doc__)
+
 ```
 
 **Download csv file**
@@ -53,7 +55,7 @@ client.fetch_to_mysql(
 <br>
 
 [^1]: python version >= `3.6+`<br>
-[^2]: 因 [台灣證券交易所 - 三大法人買賣超日報](https://www.twse.com.tw/zh/page/trading/fund/T86.html) 自民國101年5月2日起開始提供資訊，故目前抓取日期從 `2012/05/02` 開始支援，待增加其他資訊來源。
+[^2]: 因 [台灣證券交易所 - 三大法人買賣超日報](https://www.twse.com.tw/zh/page/trading/fund/T86.html) 自民國101年5月2日起開始提供資訊，故目前抓取日期從 `2012/05/02` 開始抓取，待增加其他資訊來源。
 
 
 

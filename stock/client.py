@@ -14,12 +14,27 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class TaiwanStockClient:
-    '''Fetch trading information of Taiwan stocks'''
+    '''Fetch trading information of Taiwan stocks
 
-    def __init__(self, version):
+    抓取台股上市上櫃之每日盤後行情及三大法人買賣超
+
+    -- 台灣證券交易所
+        1. rate limiting 設定，5秒內不能存取超過3次。建議至少延遲3秒，避免被ban。
+        2. 每日收盤行情自 2004/02/11 開始提供資訊。
+        3. 三大法人買賣超日報自 2012/05/02 起開始提供資訊。
+
+    -- 證券櫃檯買賣中心
+        1. 每日收盤行情自 2007/01/01 起開始提供資訊。
+        2. 三大法人買賣超日報自 2012/05/02 起開始提供資訊。
+
+    配合資訊提供日期，目前從 `2012/05/02` 開始抓取，小於日期的則會 exception NotImplementedError，
+    待未來增加其他資訊來源。
+    '''
+
+    def __init__(self, version=None, sleep_second=3):
         self._version = version
-        self.tpex = tpex.TPEXFetcher()
-        self.twse = twse.TWSEFetcher()
+        self.tpex = tpex.TPEXFetcher(sleep_second=sleep_second)
+        self.twse = twse.TWSEFetcher(sleep_second=sleep_second)
 
     @monitor
     def fetch(self, year: int, month: int, day: int) -> List[Dict]:
