@@ -16,36 +16,36 @@ class TPEXFetcher(base.BaseFetcher):
         pass
 
     def fetch(self, year: int, month: int, day: int) -> list:
-        date = f'{year}{month:02}{day:02}'
-        data = self.__adapter(date)
+        date = self.check_date_format(f'{year}{month:0>2}{day:0>2}')
+        data = self._adapter(date)
         return data
 
     def republic_era_datetime(self, date):
         year = int(date[0:4]) - 1911
-        month = date[4:6]
-        day = date[6:8]
+        month = int(date[4:6])
+        day = int(date[6:8])
         return year, month, day
 
-    def __adapter(self, date):
+    def _adapter(self, date):
         sleep(self.sleep_second)
         if date < '20070101':
             raise NotImplementedError
         elif date <= '20070630':
-            price = self.__price_20070101_20070630(date)
+            price = self._price_20070101_20070630(date)
         else:
-            price = self.__price_20070701_now(date)
+            price = self._price_20070701_now(date)
 
         sleep(self.sleep_second)
         if date < '20050421':
             raise NotImplementedError
         elif date <= '20141130':
-            institutional_investors = self.__institutional_investors_20050421_20141130(date)
+            institutional_investors = self._institutional_investors_20050421_20141130(date)
         else:
-            institutional_investors = self.__institutional_investors_20141201_now(date)
+            institutional_investors = self._institutional_investors_20141201_now(date)
 
         return self.combine(date, price, institutional_investors)
 
-    def __price_20070101_20070630(self, date):
+    def _price_20070101_20070630(self, date):
         '''
         證券櫃檯買賣中心 上櫃股票每日收盤行情(不含定價)
             -- 本資訊自 民國96年1-6月 起開始提供
@@ -120,7 +120,7 @@ class TPEXFetcher(base.BaseFetcher):
             ]
         return data
 
-    def __price_20070701_now(self, date):
+    def _price_20070701_now(self, date):
         '''
         證券櫃檯買賣中心 上櫃股票每日收盤行情(不含定價)
             -- 本資訊自民國96年7月起開始提供
@@ -193,11 +193,12 @@ class TPEXFetcher(base.BaseFetcher):
             ]
         return data
 
-    def __institutional_investors_20050421_20141130(self, date):
+    def _institutional_investors_20050421_20141130(self, date):
         '''
         證券櫃檯買賣中心 三大法人買賣明細資訊
             -- 本資訊自 民國96年4月21日 至 103年11月30日 開始提供
             -- https://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade.php
+            -- 20050421(星期五) 網站無資料
         '''
 
         year, month, day = self.republic_era_datetime(date)
@@ -256,7 +257,7 @@ class TPEXFetcher(base.BaseFetcher):
             ]
         return data
 
-    def __institutional_investors_20141201_now(self, date):
+    def _institutional_investors_20141201_now(self, date):
         '''
         證券櫃檯買賣中心 三大法人買賣明細資訊
             -- 本資訊自 民國103年12月01日 起開始提供

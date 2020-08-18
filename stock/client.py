@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import pymysql
 
-from .foundation import tpex, twse
 from .box.decorator import monitor
+from .foundation import tpex, twse
 from .orm import adapter, models
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +25,7 @@ class TaiwanStockClient:
 
     -- 證券櫃檯買賣中心
         1. 每日收盤行情自 2007/01/01 起開始提供資訊。
-        2. 三大法人買賣超日報自 2012/05/02 起開始提供資訊。
+        2. 三大法人買賣超日報自 2005/04/21 起開始提供資訊。
 
     配合資訊提供日期，目前從 `2012/05/02` 開始抓取，小於日期的則會 exception NotImplementedError，
     待未來增加其他資訊來源。
@@ -36,6 +36,12 @@ class TaiwanStockClient:
         self.tpex = tpex.TPEXFetcher(sleep_second=sleep_second)
         self.twse = twse.TWSEFetcher(sleep_second=sleep_second)
 
+    def __create_directrory(self):
+        directrory = os.path.join(PATH, 'rawdata')
+        if not os.path.isdir(directrory):
+            os.mkdir(directrory)
+        return directrory
+
     @monitor
     def fetch(self, year: int, month: int, day: int) -> List[Dict]:
         rawdata = list()
@@ -45,19 +51,31 @@ class TaiwanStockClient:
 
     def fetch_to_csv(self, year: int, month: int, day: int, path: str = None):
         if path is None:
-            directrory = os.path.join(PATH, 'rawdata')
-            if not os.path.isdir(directrory):
-                os.mkdir(directrory)
-            path = os.path.join(directrory, f'{year}{month:02}{day:02}.csv')
+            path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.csvs')
 
         if not os.path.isfile(path):
             rawdata = self.fetch(year, month, day)
-            if rawdata is None:
-                return
-            with open(path, 'w', encoding='utf8', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=rawdata[0].keys())
-                writer.writeheader()
-                writer.writerows(rawdata)
+            if rawdata is not None:
+                with open(path, 'w', encoding='utf8', newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=rawdata[0].keys())
+                    writer.writeheader()
+                    writer.writerows(rawdata)
+
+    def fetch_to_json(self, year: int, month: int, day: int, path: str = None):
+        if path is None:
+            path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.json')
+
+        if not os.path.isfile(path):
+            rawdata = self.fetch(year, month, day)
+            if rawdata is not None:
+                rawdata = {row['sid']: row for row in rawdata}
+                with open(path, 'w', encoding='utf8') as f:
+                    json.dump(
+                        obj=rawdata,
+                        fp=f,
+                        ensure_ascii=False,
+                        indent=4
+                    )
 
     def __bulk_insert(self, db, year, month, day):
         models.StockInfo.bind(db)

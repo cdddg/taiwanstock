@@ -16,25 +16,25 @@ class TWSEFetcher(BaseFetcher):
         self.sleep_second = sleep_second
         pass
 
-    def __adapter(self, date):
+    def _adapter(self, date):
         sleep(self.sleep_second)
         if date < '20040211':
             raise NotImplementedError
         else:
-            price = self.__price_20040211_now(date)
+            price = self._price_20040211_now(date)
 
         sleep(self.sleep_second)
         if date < '20120502':
             raise NotImplementedError
         else:
-            institutional_investors = self.__institutional_investors_20120502_now(date)
+            institutional_investors = self._institutional_investors_20120502_now(date)
 
         return self.combine(date, price, institutional_investors)
 
-    def __add(self, x, y):
+    def _add(self, x, y):
         return str(int(x) + int(y))
 
-    def __price_20040211_now(self, date):
+    def _price_20040211_now(self, date):
         '''
         台灣證券交易所 每日收盤行情
             -- 本資訊自 民國93年2月11日 起提供
@@ -116,7 +116,7 @@ class TWSEFetcher(BaseFetcher):
             ]
         return data
 
-    def __institutional_investors_20120502_now(self, date):
+    def _institutional_investors_20120502_now(self, date):
         '''
         台灣證券交易所 三大法人買賣超日報
             -- 本資訊自 民國101年5月2日 起提供
@@ -165,25 +165,25 @@ class TWSEFetcher(BaseFetcher):
 
             sid = row[columns['證券代號']].replace(',', '')
             data[sid] = [
-                self.__add(row[columns['外陸資買進股數(不含外資自營商)']], row[columns['外資自營商買進股數']]),
-                self.__add(row[columns['外陸資賣出股數(不含外資自營商)']], row[columns['外資自營商賣出股數']]),
-                self.__add(row[columns['外陸資買賣超股數(不含外資自營商)']], row[columns['外資自營商買賣超股數']]),
+                self._add(row[columns['外陸資買進股數(不含外資自營商)']], row[columns['外資自營商買進股數']]),
+                self._add(row[columns['外陸資賣出股數(不含外資自營商)']], row[columns['外資自營商賣出股數']]),
+                self._add(row[columns['外陸資買賣超股數(不含外資自營商)']], row[columns['外資自營商買賣超股數']]),
                 row[columns['投信買進股數']],
                 row[columns['投信賣出股數']],
                 row[columns['投信買賣超股數']],
-                self.__add(row[columns['自營商買進股數(自行買賣)']], row[columns['自營商買進股數(避險)']]),
-                self.__add(row[columns['自營商賣出股數(自行買賣)']], row[columns['自營商賣出股數(避險)']]),
-                self.__add(row[columns['自營商買賣超股數(自行買賣)']], row[columns['自營商買賣超股數(避險)']]),
+                self._add(row[columns['自營商買進股數(自行買賣)']], row[columns['自營商買進股數(避險)']]),
+                self._add(row[columns['自營商賣出股數(自行買賣)']], row[columns['自營商賣出股數(避險)']]),
+                self._add(row[columns['自營商買賣超股數(自行買賣)']], row[columns['自營商買賣超股數(避險)']]),
                 row[columns['三大法人買賣超股數']],
             ]
         return data
 
     def fetch(self, year: int, month: int, day: int) -> list:
-        date = f'{year}{month:02}{day:02}'
-        data = self.__adapter(date)
+        date = self.check_date_format(f'{year}{month:0>2}{day:0>2}')
+        data = self._adapter(date)
         return data
 
-    def __get_holiday(self, year):
+    def _get_holiday(self, year):
         republic_era_year = self.republic_era_datetime(str(year))
         resp = requests.get(
             url=urllib.parse.urljoin(self.TWSE_BASE_URL, 'holidaySchedule/holidaySchedule'),
@@ -210,20 +210,20 @@ class TWSEFetcher(BaseFetcher):
             for d in date:
                 data += [
                     {
-                        'date': self.__convert_chinese_date(year, d),
+                        'date': self._convert_chinese_date(year, d),
                         'name': row[columns['名稱']],
                         'description': row[columns['說明']]
                     }
                 ]
         return data
 
-    def __convert_chinese_date(self, year: str, date: str):
+    def _convert_chinese_date(self, year: str, date: str):
         return str(year) + datetime.strptime(date, '%m月%d日').strftime('%m%d')
 
     def get_holidays(self):
         holidays = []
         for year in range(2020, 2002 - 1, -1):
             sleep(1)
-            holidays += self.__get_holiday(year)
+            holidays += self._get_holiday(year)
         return holidays
 

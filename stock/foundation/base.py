@@ -13,16 +13,6 @@ class BaseFetcher():
     def __init__(self):
         pass
 
-    def __check_date_format(self, date: str):
-        try:
-            formatted = datetime.datetime.strptime(date, '%Y%m%d').strftime('%Y%m%d')
-            if formatted != date:
-                raise ValueError('{formatted} != {date}')
-            else:
-                return formatted
-        except ValueError as e:
-            raise DateFormatError from e
-
     @property
     def columns(self):
         return [
@@ -50,12 +40,15 @@ class BaseFetcher():
             'institutional_investors_total'
         ]
 
-    def republic_era_datetime(self, date):
-        date = self.__check_date_format(date)
-        year = str(int(date[0:4]) - 1911)
-        month = date[4:6]
-        day = date[6:8]
-        return year, month, day
+    def check_date_format(self, date: str):
+        try:
+            formatted = datetime.datetime.strptime(date, '%Y%m%d').strftime('%Y%m%d')
+            if formatted != date:
+                raise ValueError('{formatted} != {date}')
+            else:
+                return formatted
+        except ValueError as e:
+            raise DateFormatError from e
 
     def clean(self, value):
         if type(value) is str:

@@ -16,6 +16,12 @@ print(client.__doc__)
 client.fetch_to_csv(year, month, day)
 ```
 
+**Download json file**
+
+```python
+client.fetch_to_json(year, month, day)
+```
+
 **Insert to Sqlite**
 
 ```python
@@ -43,7 +49,6 @@ client.fetch_to_mysql(
 **Requirements [^1]**
 
 - [x] pip install -r requestment.txt
-- [x] python version >= `3.6+`
 
 <br>
 
