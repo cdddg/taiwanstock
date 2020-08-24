@@ -1,20 +1,25 @@
-from datetime import datetime
+import datetime as dt
 
 import stock
 
 
 if __name__ == "__main__":
-    today = datetime.now()
+    today = dt.datetime.now()
 
     # initialize
-    client = stock.client.TaiwanStockClient()
+    client = stock.client.TaiwanStockClient(
+        enable_fetch_institutional_investors=True,
+        enable_fetch_credit_transactions_securities=True,
+    )
     print(client.__doc__)
 
     # 下載csv檔
-    client.fetch_to_csv(today.year, today.month, today.day)
+    client.fetch_to_csv(today.year, today.month, today.day, overwrite=True)
 
     # 下載json檔
-    client.fetch_to_json(today.year, today.month, today.day)
+    client.fetch_to_json(today.year, today.month, today.day, overwrite=True)
+
+    exit()
 
     # 下載至sqlite資料庫
     client.fetch_to_sqlite(

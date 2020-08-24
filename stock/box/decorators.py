@@ -28,7 +28,7 @@ def monitor(factor_or_func: int or object = None):
                     print(e)
                     return
                 except (requests.exceptions.ConnectionError, ConnectionError) as e:
-                    print(f'  --{type(e).__name__}', e)
+                    print(f'  --{type(e).__name__}: "{e}"')
                     sleep(30)
                 except (Exception, NotImplementedError):
                     raise

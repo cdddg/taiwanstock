@@ -1,6 +1,15 @@
 # 台灣上市上櫃股票爬蟲
 
-**抓取台股每日盤後及三大法人交易資訊 Fetch trading information of Taiwan stocks**
+| 抓取資料範圍                                     | 抓取支援日期 |
+| ----------------------------------------------- | ------------ |
+| `盤後行情`                                       | 2007/01/01   |
+| `盤後行情` 、 `三大買人買賣超`                   | 2012/05/02   |
+| `盤後行情` 、 `融資融券餘額`                     | 2003/08/01   |
+| `盤後行情` 、 `三大買人買賣超` 、 `融資融券餘額` | 2012/05/02   |
+
+
+
+**Initialize**
 
 ```python
 from . import stock
@@ -52,7 +61,7 @@ client.fetch_to_mysql(
 
 <br>
 
-**Source [^2]**
+**Source**
 
 1. [台灣證券交易所](https://www.twse.com.tw/zh/)
 2. [證券櫃檯買賣中心](https://www.tpex.org.tw/web/)
@@ -60,7 +69,3 @@ client.fetch_to_mysql(
 <br>
 
 [^1]: python version >= `3.6+`<br>
-[^2]: 因 [台灣證券交易所 - 三大法人買賣超日報](https://www.twse.com.tw/zh/page/trading/fund/T86.html) 自民國101年5月2日起開始提供資訊，故目前抓取日期從 `2012/05/02` 開始抓取，待增加其他資訊來源。
-
-
-

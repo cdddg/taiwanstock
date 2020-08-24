@@ -50,13 +50,11 @@ class BaseFetcher():
         融資買進
         融資賣出
         融資現金償還
-        融資前日餘額
         融資今日餘額
         融資限額
         融券買進
         融券賣出
         融券現金償還
-        融券前日餘額
         融券今日餘額
         融券限額
         資券互抵
@@ -66,13 +64,11 @@ class BaseFetcher():
             'margin_purchase',
             'margin_sales',
             'margin_cash_redemption',
-            'margin_previous_balance',
             'margin_today_balance',
             'margin_quota',
             'short_covering',
             'short_sale',
             'short_stock_redemption',
-            'short_previous_balance'
             'short_today_balance',
             'short_quota',
             'offsetting_margin_short',
@@ -118,13 +114,17 @@ class BaseFetcher():
 
         results = []
         for id in price.keys():
-            if institutional_investors is None and credit_transactions_securities is None:
+            if institutional_investors is not None and credit_transactions_securities is not None:
                 result = dict(
                     itertools.zip_longest(
-                        self.price_columns,
+                        self.price_columns
+                        + self.institutional_investors_columns
+                        + self.credit_transactions_securities_columns,
                         [date]
-                        + price[id],
-                        fillvalue=None
+                        + price[id]
+                        + institutional_investors.get(id, [])
+                        + credit_transactions_securities.get(id, []),
+                        fillvalue='0'
                     )
                 )
             elif institutional_investors is not None:
@@ -152,14 +152,10 @@ class BaseFetcher():
             else:
                 result = dict(
                     itertools.zip_longest(
-                        self.price_columns
-                        + self.institutional_investors_columns
-                        + self.credit_transactions_securities_columns,
+                        self.price_columns,
                         [date]
-                        + price[id]
-                        + institutional_investors.get(id, [])
-                        + credit_transactions_securities.get(id, []),
-                        fillvalue='0'
+                        + price[id],
+                        fillvalue=None
                     )
                 )
 
