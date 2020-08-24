@@ -6,7 +6,7 @@ from typing import Dict, List
 
 import pymysql
 
-from .box.decorator import monitor
+from .box.decorators import monitor
 from .foundation import tpex, twse
 from .orm import adapter, models
 
@@ -18,29 +18,46 @@ class TaiwanStockClient:
 
     抓取台股上市上櫃之每日盤後行情及三大法人買賣超
 
-    -- 台灣證券交易所
+    - 台灣證券交易所
         1. rate limiting 設定，5秒內不能存取超過3次。建議至少延遲3秒，避免被ban。
         2. 每日收盤行情自 2004/02/11 開始提供資訊。
         3. 三大法人買賣超日報自 2012/05/02 起開始提供資訊。
 
-    -- 證券櫃檯買賣中心
+    - 證券櫃檯買賣中心
         1. 每日收盤行情自 2007/01/01 起開始提供資訊。
         2. 三大法人買賣超日報自 2005/04/21 起開始提供資訊。
 
-    配合資訊提供日期，目前從 `2012/05/02` 開始抓取，小於日期的則會 exception NotImplementedError，
-    待未來增加其他資訊來源。
+    - 配合來源資料網站
+        1. 只抓取` 盤後行情` 從 2007/01/01 開始支援。
+        2. 抓取 `盤後行情` 及 `三大買人買賣超` 從 2012/05/02 開始支援。
+        3. 抓取日小於來源網站資訊提供日則 raise NotImplementedError
+        4. 抓取日若為國定假日則 raise HolidayWarning
     '''
 
-    def __init__(self, version=None, sleep_second=3):
+    def __init__(
+        self,
+        version=None,
+        enable_fetch_institutional_investors=False,
+        enable_fetch_credit_transactions_securities=False,
+        sleep_second=3
+    ):
         self._version = version
-        self.tpex = tpex.TPEXFetcher(sleep_second=sleep_second)
-        self.twse = twse.TWSEFetcher(sleep_second=sleep_second)
+
+        enable_fetch_price = True
+        kwargs = locals().copy()
+        kwargs.pop('self')
+        kwargs.pop('version')
+        self.tpex = tpex.TPEXFetcher(**kwargs)
+        self.twse = twse.TWSEFetcher(**kwargs)
 
     def __create_directrory(self):
         directrory = os.path.join(PATH, 'rawdata')
         if not os.path.isdir(directrory):
             os.mkdir(directrory)
         return directrory
+
+    # def __verify_is_today(self, year, month, day):
+    #     pass
 
     @monitor
     def fetch(self, year: int, month: int, day: int) -> List[Dict]:
@@ -49,11 +66,11 @@ class TaiwanStockClient:
         rawdata += self.tpex.fetch(year, month, day)
         return rawdata
 
-    def fetch_to_csv(self, year: int, month: int, day: int, path: str = None):
+    def fetch_to_csv(self, year: int, month: int, day: int, path: str = None, overwrite=True):
         if path is None:
-            path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.csvs')
+            path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.csv')
 
-        if not os.path.isfile(path):
+        if not os.path.isfile(path) or overwrite is True:
             rawdata = self.fetch(year, month, day)
             if rawdata is not None:
                 with open(path, 'w', encoding='utf8', newline='') as f:
@@ -61,11 +78,11 @@ class TaiwanStockClient:
                     writer.writeheader()
                     writer.writerows(rawdata)
 
-    def fetch_to_json(self, year: int, month: int, day: int, path: str = None):
+    def fetch_to_json(self, year: int, month: int, day: int, path: str = None, overwrite=True):
         if path is None:
             path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.json')
 
-        if not os.path.isfile(path):
+        if not os.path.isfile(path) or overwrite is True:
             rawdata = self.fetch(year, month, day)
             if rawdata is not None:
                 rawdata = {row['sid']: row for row in rawdata}

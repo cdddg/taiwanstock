@@ -1,7 +1,6 @@
-from stock.foundation import twse
-from stock.box.exceptions import HolidayWarning
-
 import time
+
+from stock.foundation import twse
 
 
 class TestTwseFetcher:
@@ -16,18 +15,30 @@ class TestTwseFetcher:
             return None
 
     def setup(self):
-        self.obj = twse.TWSEFetcher(sleep_second=self.SLEEP_SECOND)
+        self.twse_init_kwargs = {
+            'enable_fetch_price': False,
+            'enable_fetch_institutional_investors': False,
+            'enable_fetch_credit_transactions_securities': False,
+            'sleep_second': self.SLEEP_SECOND
+        }
+        self.obj = twse.TWSEFetcher(**self.twse_init_kwargs)
 
     def test_initialize_arguments(self):
-        assert self.obj.sleep_second == self.SLEEP_SECOND
+        assert self.obj._sleep_second == self.SLEEP_SECOND
 
     def test_tpex_base_url(self):
         assert self.obj.TWSE_BASE_URL == 'http://www.twse.com.tw/'
 
     def test_adapter(self):
-        return
-        assert self.__raise(self.obj._adapter, '20120430') is NotImplementedError
-        assert self.__raise(self.obj._adapter, '20120501') is HolidayWarning
+        params = self.twse_init_kwargs.copy()
+        params['enable_fetch_price'] = True
+        object = twse.TWSEFetcher(**params)
+        assert self.__raise(object._adapter, '20040210') is NotImplementedError
+
+        params = self.twse_init_kwargs.copy()
+        params['enable_fetch_institutional_investors'] = True
+        object = twse.TWSEFetcher(**params)
+        assert self.__raise(object._adapter, '20120501') is NotImplementedError
 
     def test_price(self):
         time.sleep(self.SLEEP_SECOND)
@@ -42,4 +53,3 @@ class TestTwseFetcher:
         assert data['2330'] == [
             '13041781', '17798488', '-4756707', '20000', '199000', '-179000', '692000', '709000', '-17000', '-4952707'
         ]
-

@@ -31,6 +31,7 @@ class SQLAdapter:
 
 class MigratorAdapter:
     def __init__(self, db: SQLAdapter):
+        raise NotImplementedError
         self._db = db
 
     @property

@@ -1,7 +1,6 @@
-from stock.foundation import tpex
-from stock.box.exceptions import HolidayWarning
-
 import time
+
+from stock.foundation import tpex
 
 
 class TestTpexFetcher:
@@ -16,10 +15,16 @@ class TestTpexFetcher:
             return None
 
     def setup(self):
-        self.obj = tpex.TPEXFetcher(sleep_second=self.SLEEP_SECOND)
+        self.tpex_init_kwargs = {
+            'enable_fetch_price': False,
+            'enable_fetch_institutional_investors': False,
+            'enable_fetch_credit_transactions_securities': False,
+            'sleep_second': self.SLEEP_SECOND
+        }
+        self.obj = tpex.TPEXFetcher(**self.tpex_init_kwargs)
 
     def test_initialize_arguments(self):
-        assert self.obj.sleep_second == self.SLEEP_SECOND
+        assert self.obj._sleep_second == self.SLEEP_SECOND
 
     def test_tpex_base_url(self):
         assert self.obj.TPEX_BASE_URL == 'http://www.tpex.org.tw/'
@@ -31,18 +36,21 @@ class TestTpexFetcher:
         assert day == 1
 
     def test_adapter(self):
-        assert self.__raise(self.obj._adapter, '20061231') is NotImplementedError
-        assert self.__raise(self.obj._adapter, '20070101') is HolidayWarning
+        params = self.tpex_init_kwargs.copy()
+        params['enable_fetch_price'] = True
+        object = tpex.TPEXFetcher(**params)
+        assert self.__raise(object._adapter, '20061231') is NotImplementedError
+
+        params = self.tpex_init_kwargs.copy()
+        params['enable_fetch_institutional_investors'] = True
+        object = tpex.TPEXFetcher(**params)
+        assert self.__raise(object._adapter, '20050420') is NotImplementedError
 
     def test_fetch_price(self):
-        return
         time.sleep(self.SLEEP_SECOND)
         data = self.obj._price_20070101_20070630('20070105')
         assert data['4303'] == [
             '4303', '信立', '2.95', '2.95', '2.72', '2.72', '-0.20', '-6.85', '847000', '134', '2365010'
-        ]
-        assert data['70281'] == [
-            '70281', '中信T6', '3.90', '4.25', '3.90', '3.90', '-2.40', '-38.1', '268000', '55', '1053150'
         ]
 
         time.sleep(self.SLEEP_SECOND)
@@ -53,7 +61,7 @@ class TestTpexFetcher:
 
         time.sleep(self.SLEEP_SECOND)
         data = self.obj._price_20070701_now('20200102')
-        assert data['4303'] == [
+        assert data['5274'] == [
             '5274', '信驊', '968.00', '984.00', '959.00', '970.00', '+11.00', '1.15', '205000', '202', '198885000'
         ]
 

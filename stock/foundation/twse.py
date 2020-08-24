@@ -12,24 +12,42 @@ from .base import BaseFetcher
 class TWSEFetcher(BaseFetcher):
     TWSE_BASE_URL = 'http://www.twse.com.tw/'
 
-    def __init__(self, sleep_second: int = 3):
-        self.sleep_second = sleep_second
-        pass
+    def __init__(
+        self,
+        enable_fetch_price,
+        enable_fetch_institutional_investors,
+        enable_fetch_credit_transactions_securities,
+        sleep_second
+    ):
+        self._enable_fetch_price = enable_fetch_price
+        self._enable_fetch_institutional_investors = enable_fetch_institutional_investors
+        self._enable_fetch_credit_transactions_securities = enable_fetch_credit_transactions_securities
+        self._sleep_second = sleep_second
 
     def _adapter(self, date):
-        sleep(self.sleep_second)
-        if date < '20040211':
-            raise NotImplementedError
+        if self._enable_fetch_price:
+            sleep(self._sleep_second)
+            if date < '20040211':
+                raise NotImplementedError
+            else:
+                price = self._price_20040211_now(date)
         else:
-            price = self._price_20040211_now(date)
+            price = None
 
-        sleep(self.sleep_second)
-        if date < '20120502':
-            raise NotImplementedError
+        if self._enable_fetch_institutional_investors:
+            sleep(self._sleep_second)
+            if date < '20120502':
+                raise NotImplementedError
+            else:
+                institutional_investors = self._institutional_investors_20120502_now(date)
         else:
-            institutional_investors = self._institutional_investors_20120502_now(date)
+            institutional_investors = None
 
-        return self.combine(date, price, institutional_investors)
+        if self._enable_fetch_credit_transactions_securities:
+            pass
+        credit_transactions_securities = None
+
+        return self.combine(date, price, institutional_investors, credit_transactions_securities)
 
     def _add(self, x, y):
         return str(int(x) + int(y))
@@ -85,8 +103,10 @@ class TWSEFetcher(BaseFetcher):
         data = dict()
         for row in rawdata[f'data{index}']:
             row = [self.clean(r) for r in row]
-
             sid = row[columns['證券代號']]
+            if self.verify_stock_id_format(id=sid) is False:
+                continue
+
             amplitude = re.findall(
                 re.compile(r"<\s*p[^>]*>(.*?)<\s*/\s*p>"),
                 row[columns['漲跌(+/-)']]

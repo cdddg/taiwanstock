@@ -11,9 +11,17 @@ from . import base
 class TPEXFetcher(base.BaseFetcher):
     TPEX_BASE_URL = 'http://www.tpex.org.tw/'
 
-    def __init__(self, sleep_second: int = 3):
-        self.sleep_second = sleep_second
-        pass
+    def __init__(
+        self,
+        enable_fetch_price,
+        enable_fetch_institutional_investors,
+        enable_fetch_credit_transactions_securities,
+        sleep_second
+    ):
+        self._enable_fetch_price = enable_fetch_price
+        self._enable_fetch_institutional_investors = enable_fetch_institutional_investors
+        self._enable_fetch_credit_transactions_securities = enable_fetch_credit_transactions_securities
+        self._sleep_second = sleep_second
 
     def fetch(self, year: int, month: int, day: int) -> list:
         date = self.check_date_format(f'{year}{month:0>2}{day:0>2}')
@@ -27,23 +35,33 @@ class TPEXFetcher(base.BaseFetcher):
         return year, month, day
 
     def _adapter(self, date):
-        sleep(self.sleep_second)
-        if date < '20070101':
-            raise NotImplementedError
-        elif date <= '20070630':
-            price = self._price_20070101_20070630(date)
+        if self._enable_fetch_price:
+            sleep(self._sleep_second)
+            if date < '20070101':
+                raise NotImplementedError
+            elif date <= '20070630':
+                price = self._price_20070101_20070630(date)
+            else:
+                price = self._price_20070701_now(date)
         else:
-            price = self._price_20070701_now(date)
+            price = None
 
-        sleep(self.sleep_second)
-        if date < '20050421':
-            raise NotImplementedError
-        elif date <= '20141130':
-            institutional_investors = self._institutional_investors_20050421_20141130(date)
+        if self._enable_fetch_institutional_investors:
+            sleep(self._sleep_second)
+            if date < '20050421':
+                raise NotImplementedError
+            elif date <= '20141130':
+                institutional_investors = self._institutional_investors_20050421_20141130(date)
+            else:
+                institutional_investors = self._institutional_investors_20141201_now(date)
         else:
-            institutional_investors = self._institutional_investors_20141201_now(date)
+            institutional_investors = None
 
-        return self.combine(date, price, institutional_investors)
+        if self._enable_fetch_credit_transactions_securities:
+            pass
+        credit_transactions_securities = None
+
+        return self.combine(date, price, institutional_investors, credit_transactions_securities)
 
     def _price_20070101_20070630(self, date):
         '''
@@ -94,6 +112,9 @@ class TPEXFetcher(base.BaseFetcher):
         data = dict()
         for row in text.find_all('tr')[1:]:
             row = [self.clean(td.text) for td in row.find_all('td')]
+            sid = row[columns['代號']]
+            if self.verify_stock_id_format(id=sid) is False:
+                continue
 
             amplitude = row[columns['漲跌']]
             if amplitude in ('除息', '除權', '除權息', None):
@@ -104,7 +125,6 @@ class TPEXFetcher(base.BaseFetcher):
                 amplitude_ratio = float(amplitude) / yesterday_price * 100
                 amplitude_ratio = str(round(amplitude_ratio, 2))
 
-            sid = row[columns['代號']]
             data[sid] = [
                 sid,
                 row[columns['名稱']],
@@ -167,6 +187,9 @@ class TPEXFetcher(base.BaseFetcher):
         data = dict()
         for row in rawdata['aaData']:
             row = [self.clean(v) for v in row]
+            sid = row[columns['代號']]
+            if self.verify_stock_id_format(id=sid) is False:
+                continue
 
             amplitude = row[columns['漲跌']]
             if amplitude in ('除息', '除權', '除權息', None):
@@ -177,7 +200,6 @@ class TPEXFetcher(base.BaseFetcher):
                 amplitude_ratio = float(amplitude) / yesterday_price * 100
                 amplitude_ratio = str(round(amplitude_ratio, 2))
 
-            sid = row[columns['代號']]
             data[sid] = [
                 sid,
                 row[columns['名稱']],

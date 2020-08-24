@@ -9,7 +9,7 @@ DEFAULT_RUN_TIMES = 3
 
 
 def monitor(factor_or_func: int or object = None):
-    def _inner(func):
+    def _decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             print(func.__qualname__ + '()')
@@ -30,7 +30,7 @@ def monitor(factor_or_func: int or object = None):
                 except (requests.exceptions.ConnectionError, ConnectionError) as e:
                     print(f'  --{type(e).__name__}', e)
                     sleep(30)
-                except NotImplementedError:
+                except (Exception, NotImplementedError):
                     raise
         return wrapper
-    return _inner(factor_or_func) if callable(factor_or_func) else _inner
+    return _decorator(factor_or_func) if callable(factor_or_func) else _decorator
