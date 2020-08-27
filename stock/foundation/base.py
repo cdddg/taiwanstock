@@ -23,8 +23,6 @@ class BaseFetcher():
             'high',
             'low',
             'close',
-            'amplitude',
-            'amplitude_ratio',
             'capacity',
             'transaction',
             'turnover']
@@ -103,6 +101,9 @@ class BaseFetcher():
                     .replace('- ', '-') \
                     .strip()
         return value
+
+    def add(self, x, y):
+        return str(int(x) + int(y))
 
     def combine(
         self,

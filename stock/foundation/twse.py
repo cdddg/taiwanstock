@@ -174,49 +174,112 @@ class TWSEFetcher(BaseFetcher):
         if rawdata['stat'] == '很抱歉，沒有符合條件的資料!':
             raise HolidayWarning(date)
 
-        # '證券代號',
-        # '證券名稱',
-        # '外陸資買進股數(不含外資自營商)',
-        # '外陸資賣出股數(不含外資自營商)',
-        # '外陸資買賣超股數(不含外資自營商)',
-        # '外資自營商買進股數', '外資自營商賣出股數',
-        # '外資自營商買賣超股數',
-        # '投信買進股數',
-        # '投信賣出股數',
-        # '投信買賣超股數',
-        # '自營商買賣超股數',
-        # '自營商買進股數(自行買賣)',
-        # '自營商賣出股數(自行買賣)',
-        # '自營商買賣超股數(自行買賣)',
-        # '自營商買進股數(避險)',
-        # '自營商賣出股數(避險)',
-        # '自營商買賣超股數(避險)',
-        # '三大法人買賣超股數'
         columns = rawdata['fields']
         columns = dict(zip(columns, range(len(columns))))
 
         data = dict()
         for row in rawdata['data']:
             if len(row) != len(columns.keys()):
-                raise ConnectionError
+                raise ConnectionError('get data is empty, need to redownload.')
 
             row = [self.clean(r) for r in row]
             sid = row[columns['證券代號']].replace(',', '')
             if self.verify_stock_id_format(id=sid) is False:
                 continue
 
-            data[sid] = [
-                self._add(row[columns['外陸資買進股數(不含外資自營商)']], row[columns['外資自營商買進股數']]),
-                self._add(row[columns['外陸資賣出股數(不含外資自營商)']], row[columns['外資自營商賣出股數']]),
-                self._add(row[columns['外陸資買賣超股數(不含外資自營商)']], row[columns['外資自營商買賣超股數']]),
-                row[columns['投信買進股數']],
-                row[columns['投信賣出股數']],
-                row[columns['投信買賣超股數']],
-                self._add(row[columns['自營商買進股數(自行買賣)']], row[columns['自營商買進股數(避險)']]),
-                self._add(row[columns['自營商賣出股數(自行買賣)']], row[columns['自營商賣出股數(避險)']]),
-                self._add(row[columns['自營商買賣超股數(自行買賣)']], row[columns['自營商買賣超股數(避險)']]),
-                row[columns['三大法人買賣超股數']],
-            ]
+            if date <= '20141130':
+                # "fields": [
+                #     "證券代號",
+                #     "證券名稱",
+                #     "外資買進股數",
+                #     "外資賣出股數",
+                #     "外資買賣超股數",
+                #     "投信買進股數",
+                #     "投信賣出股數",
+                #     "投信買賣超股數",
+                #     "自營商買賣超股數",
+                #     "自營商買進股數",
+                #     "自營商賣出股數",
+                #     "三大法人買賣超股數"
+                # ],
+                data[sid] = [
+                    row[columns['外資買進股數']],
+                    row[columns['外資賣出股數']],
+                    row[columns['外資買賣超股數']],
+                    row[columns['投信買進股數']],
+                    row[columns['投信賣出股數']],
+                    row[columns['投信買賣超股數']],
+                    row[columns['自營商買進股數']],
+                    row[columns['自營商賣出股數']],
+                    row[columns['自營商買賣超股數']],
+                    row[columns['三大法人買賣超股數']],
+                ]
+            elif date <= '20171217':
+                # "fields": [
+                #     "證券代號",
+                #     "證券名稱",
+                #     "外資買進股數",
+                #     "外資賣出股數",
+                #     "外資買賣超股數",
+                #     "投信買進股數",
+                #     "投信賣出股數",
+                #     "投信買賣超股數",
+                #     "自營商買賣超股數",
+                #     "自營商買進股數(自行買賣)",
+                #     "自營商賣出股數(自行買賣)",
+                #     "自營商買賣超股數(自行買賣)",
+                #     "自營商買進股數(避險)",
+                #     "自營商賣出股數(避險)",
+                #     "自營商買賣超股數(避險)",
+                #     "三大法人買賣超股數"
+                # ]
+                data[sid] = [
+                    row[columns['外資買進股數']],
+                    row[columns['外資賣出股數']],
+                    row[columns['外資買賣超股數']],
+                    row[columns['投信買進股數']],
+                    row[columns['投信賣出股數']],
+                    row[columns['投信買賣超股數']],
+                    self.add(row[columns['自營商買進股數(自行買賣)']], row[columns['自營商買進股數(避險)']]),
+                    self.add(row[columns['自營商賣出股數(自行買賣)']], row[columns['自營商賣出股數(避險)']]),
+                    self.add(row[columns['自營商買賣超股數(自行買賣)']], row[columns['自營商買賣超股數(避險)']]),
+                    row[columns['三大法人買賣超股數']],
+                ]
+            else:
+                # "fields": [
+                #     "證券代號",
+                #     "證券名稱",
+                #     "外陸資買進股數(不含外資自營商)",
+                #     "外陸資賣出股數(不含外資自營商)",
+                #     "外陸資買賣超股數(不含外資自營商)",
+                #     "外資自營商買進股數",
+                #     "外資自營商賣出股數",
+                #     "外資自營商買賣超股數",
+                #     "投信買進股數",
+                #     "投信賣出股數",
+                #     "投信買賣超股數",
+                #     "自營商買賣超股數",
+                #     "自營商買進股數(自行買賣)",
+                #     "自營商賣出股數(自行買賣)",
+                #     "自營商買賣超股數(自行買賣)",
+                #     "自營商買進股數(避險)",
+                #     "自營商賣出股數(避險)",
+                #     "自營商買賣超股數(避險)",
+                #     "三大法人買賣超股數"
+                # ]
+                data[sid] = [
+                    self.add(row[columns['外陸資買進股數(不含外資自營商)']], row[columns['外資自營商買進股數']]),
+                    self.add(row[columns['外陸資賣出股數(不含外資自營商)']], row[columns['外資自營商賣出股數']]),
+                    self.add(row[columns['外陸資買賣超股數(不含外資自營商)']], row[columns['外資自營商買賣超股數']]),
+                    row[columns['投信買進股數']],
+                    row[columns['投信賣出股數']],
+                    row[columns['投信買賣超股數']],
+                    self.add(row[columns['自營商買進股數(自行買賣)']], row[columns['自營商買進股數(避險)']]),
+                    self.add(row[columns['自營商賣出股數(自行買賣)']], row[columns['自營商賣出股數(避險)']]),
+                    self.add(row[columns['自營商買賣超股數(自行買賣)']], row[columns['自營商買賣超股數(避險)']]),
+                    row[columns['三大法人買賣超股數']],
+                ]
+
         return data
 
     def _credit_transactions_securities_20010101_now(self, date):
@@ -264,7 +327,6 @@ class TWSEFetcher(BaseFetcher):
             "註記"
         ]
         columns = dict(zip(columns, range(len(columns))))
-        print(resp.url)
 
         data = dict()
         for row in rawdata['data']:
@@ -322,9 +384,6 @@ class TWSEFetcher(BaseFetcher):
                     }
                 ]
         return data
-
-    def _add(self, x, y):
-        return str(int(x) + int(y))
 
     def _convert_chinese_date(self, year: str, date: str):
         return str(year) + datetime.strptime(date, '%m月%d日').strftime('%m%d')

@@ -12,7 +12,8 @@ def monitor(factor_or_func: int or object = None):
     def _decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            print(func.__qualname__ + '()')
+            params = ', '.join([str(a) for a in args[1:]] + [f'{k}={v}' for k, v in kwargs])
+            print(func.__qualname__ + f'({params})')
 
             if 'factor_or_func' not in locals() \
                     or callable(factor_or_func) \

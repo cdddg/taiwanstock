@@ -20,8 +20,6 @@ class TestBaseFetcher:
             'high',
             'low',
             'close',
-            'amplitude',
-            'amplitude_ratio',
             'capacity',
             'transaction',
             'turnover',
@@ -42,13 +40,11 @@ class TestBaseFetcher:
             'margin_purchase',
             'margin_sales',
             'margin_cash_redemption',
-            'margin_previous_balance',
             'margin_today_balance',
             'margin_quota',
             'short_covering',
             'short_sale',
             'short_stock_redemption',
-            'short_previous_balance'
             'short_today_balance',
             'short_quota',
             'offsetting_margin_short',
@@ -64,4 +60,4 @@ class TestBaseFetcher:
         assert self.obj.clean('1,000,000') == '1000000'
 
     def test_combine(self):
-        NotImplementedError
+        return NotImplemented

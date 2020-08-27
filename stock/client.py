@@ -39,7 +39,7 @@ class TaiwanStockClient:
         | `盤後行情` 、 `三大買人買賣超` 、 `融資融券餘額` | 2012/05/02   |
 
         1. 抓取日小於來源網站資訊提供日則 raise NotImplementedError
-        2. 抓取日若為國定假日則 raise HolidayWarning
+        2. 抓取日若為國定假日則 print(date is holiday)
     '''
 
     def __init__(

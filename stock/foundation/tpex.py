@@ -255,8 +255,6 @@ class TPEXFetcher(base.BaseFetcher):
 
         data = dict()
         for row in text:
-            print(row)
-            input('paused;')
             row = [self.clean(td.text) for td in row.find_all('td')]
             sid = row[columns['代號']]
             if self.verify_stock_id_format(id=sid) is False:
@@ -304,55 +302,98 @@ class TPEXFetcher(base.BaseFetcher):
         if rawdata['iTotalRecords'] == 0:
             raise HolidayWarning(date)
 
-        columns = [
-            '代號',
-            '名稱',
-            '外資及陸資(不含外資自營商)-買進股數',
-            '外資及陸資(不含外資自營商)-賣出股數',
-            '外資及陸資(不含外資自營商)-買賣超股數',
-            '外資自營商-買進股數',
-            '外資自營商-賣出股數',
-            '外資自營商-買賣超股數',
-            '外資及陸資-買進股數',
-            '外資及陸資-賣出股數',
-            '外資及陸資-買賣超股數',
-            '投信-買進股數',
-            '投信-賣出股數',
-            '投信-買賣超股數',
-            '自營商(自行買賣)-買進股數',
-            '自營商(自行買賣)-賣出股數',
-            '自營商(自行買賣)-買賣超股數',
-            '自營商(避險)-買進股數',
-            '自營商(避險)-賣出股數',
-            '自營商(避險)-買賣超股數',
-            '自營商-買進股數',
-            '自營商-賣出股數',
-            '自營商-買賣超股數',
-            '三大法人買賣超股數合計',
-            'non'
-        ]
-        columns = dict(zip(columns, range(len(columns))))
-
-        data = dict()
-        for row in rawdata['aaData']:
-            row = [self.clean(v) for v in row]
-            sid = row[columns['代號']]
-            if self.verify_stock_id_format(id=sid) is False:
-                continue
-
-            data[sid] = [
-                row[columns['外資及陸資-買進股數']],
-                row[columns['外資及陸資-賣出股數']],
-                row[columns['外資及陸資-買賣超股數']],
-                row[columns['投信-買進股數']],
-                row[columns['投信-賣出股數']],
-                row[columns['投信-買賣超股數']],
-                row[columns['自營商-買進股數']],
-                row[columns['自營商-賣出股數']],
-                row[columns['自營商-買賣超股數']],
-                row[columns['三大法人買賣超股數合計']],
+        if date < '20180115':
+            # 107年01月12日 三大法人日交易資訊(含普通股、鉅額、零股、綜合帳戶之投信買賣成交量)依股票代碼排序
+            # 107年01月13日 國定假日
+            # 107年01月14日 國定假日
+            columns = [
+                '代號',
+                '名稱',
+                '外資及陸資買股數',
+                '外資及陸資賣股數',
+                '外資及陸資淨買股數',
+                '投信買股數',
+                '投信賣股數',
+                '投信淨買股數',
+                '自營商淨買股數',
+                '自營商(自行買賣)買股數',
+                '自營商(自行買賣)賣股數',
+                '自營商(自行買賣)淨買股數',
+                '自營商(避險)買股數',
+                '自營商(避險)賣股數',
+                '自營商(避險)淨買股數',
+                '三大法人買賣超股數'
             ]
-        return data
+            columns = dict(zip(columns, range(len(columns))))
+            data = dict()
+            for row in rawdata['aaData']:
+                row = [self.clean(v) for v in row]
+                sid = row[columns['代號']]
+                if self.verify_stock_id_format(id=sid) is False:
+                    continue
+                data[sid] = [
+                    row[columns['外資及陸資買股數']],
+                    row[columns['外資及陸資賣股數']],
+                    row[columns['外資及陸資淨買股數']],
+                    row[columns['投信買股數']],
+                    row[columns['投信賣股數']],
+                    row[columns['投信淨買股數']],
+                    self.add(row[columns['自營商(自行買賣)買股數']], row[columns['自營商(避險)買股數']]),
+                    self.add(row[columns['自營商(自行買賣)賣股數']], row[columns['自營商(避險)賣股數']]),
+                    self.add(row[columns['自營商(自行買賣)淨買股數']], row[columns['自營商(避險)淨買股數']]),
+                    row[columns['三大法人買賣超股數']],
+                ]
+            return data
+
+        else:
+            # 107年01月15日 三大法人日交易資訊(含普通股、鉅額、零股、綜合帳戶之投信買賣成交量)依股票代碼排序
+            columns = [
+                '代號',
+                '名稱',
+                '外資及陸資(不含外資自營商)買進股數',
+                '外資及陸資(不含外資自營商)賣出股數',
+                '外資及陸資(不含外資自營商)買賣超股數',
+                '外資自營商買進股數',
+                '外資自營商賣出股數',
+                '外資自營商買賣超股數',
+                '外資及陸資買進股數',
+                '外資及陸資賣出股數',
+                '外資及陸資買賣超股數',
+                '投信買進股數',
+                '投信賣出股數',
+                '投信買賣超股數',
+                '自營商(自行買賣)買進股數',
+                '自營商(自行買賣)賣出股數',
+                '自營商(自行買賣)買賣超股數',
+                '自營商(避險)買進股數',
+                '自營商(避險)賣出股數',
+                '自營商(避險)買賣超股數',
+                '自營商買進股數',
+                '自營商賣出股數',
+                '自營商買賣超股數',
+                '三大法人買賣超股數合計',
+                'non'
+            ]
+            columns = dict(zip(columns, range(len(columns))))
+            data = dict()
+            for row in rawdata['aaData']:
+                row = [self.clean(v) for v in row]
+                sid = row[columns['代號']]
+                if self.verify_stock_id_format(id=sid) is False:
+                    continue
+                data[sid] = [
+                    row[columns['外資及陸資買進股數']],
+                    row[columns['外資及陸資賣出股數']],
+                    row[columns['外資及陸資買賣超股數']],
+                    row[columns['投信買進股數']],
+                    row[columns['投信賣出股數']],
+                    row[columns['投信買賣超股數']],
+                    row[columns['自營商買進股數']],
+                    row[columns['自營商賣出股數']],
+                    row[columns['自營商買賣超股數']],
+                    row[columns['三大法人買賣超股數合計']],
+                ]
+            return data
 
     def _credit_transactions_securities_20030801_20061231(self, date):
         raise NotImplementedError
@@ -388,8 +429,6 @@ class TPEXFetcher(base.BaseFetcher):
             print(resp.url)
             print(resp.text)
             raise
-
-        print(resp.url)
 
         columns = [
             "代號",

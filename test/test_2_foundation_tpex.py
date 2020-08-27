@@ -39,30 +39,30 @@ class TestTpexFetcher:
         params = self.tpex_init_kwargs.copy()
         params['enable_fetch_price'] = True
         object = tpex.TPEXFetcher(**params)
-        assert self.__raise(object._adapter, '20061231') is NotImplementedError
+        assert self.__raise(object.adapter, '20061231') is NotImplementedError
 
         params = self.tpex_init_kwargs.copy()
         params['enable_fetch_institutional_investors'] = True
         object = tpex.TPEXFetcher(**params)
-        assert self.__raise(object._adapter, '20050420') is NotImplementedError
+        assert self.__raise(object.adapter, '20050420') is NotImplementedError
 
     def test_fetch_price(self):
         time.sleep(self.SLEEP_SECOND)
         data = self.obj._price_20070101_20070630('20070105')
         assert data['4303'] == [
-            '4303', '信立', '2.95', '2.95', '2.72', '2.72', '-0.20', '-6.85', '847000', '134', '2365010'
+            '4303', '信立', '2.95', '2.95', '2.72', '2.72', '847000', '134', '2365010'
         ]
 
         time.sleep(self.SLEEP_SECOND)
         data = self.obj._price_20070701_now('20070702')
         assert data['4303'] == [
-            '4303', '信立', '2.57', '2.57', '2.57', '2.57', '+0.16', '6.64', '2013000', '178', '5173410'
+            '4303', '信立', '2.57', '2.57', '2.57', '2.57', '2013000', '178', '5173410'
         ]
 
         time.sleep(self.SLEEP_SECOND)
         data = self.obj._price_20070701_now('20200102')
         assert data['5274'] == [
-            '5274', '信驊', '968.00', '984.00', '959.00', '970.00', '+11.00', '1.15', '205000', '202', '198885000'
+            '5274', '信驊', '968.00', '984.00', '959.00', '970.00', '205000', '202', '198885000'
         ]
 
     def test_fetch_institutional_investors(self):
@@ -76,4 +76,14 @@ class TestTpexFetcher:
         data = self.obj._institutional_investors_20141201_now('20200102')
         assert data['3227'] == [
             '370000', '187000', '183000', '0', '0', '0', '205000', '293000', '-88000', '95000'
+        ]
+
+    def test_fetch_credit_transactions_securities(self):
+        response = self.__raise(self.obj._credit_transactions_securities_20030801_20061231, '20061231')
+        assert response is NotImplementedError
+
+        time.sleep(self.SLEEP_SECOND)
+        data = self.obj._credit_transactions_securities_20070101_now('20200102')
+        assert data['3227'] == [
+            '778', '540', '0', '13353', '34301', '60', '40', '0', '1627', '34301', '2', ''
         ]
