@@ -1,6 +1,7 @@
-import time
+import copy
 
 from stock.foundation import tpex
+from stock.box.exceptions import HolidayWarning
 
 
 class TestTpexFetcher:
@@ -35,55 +36,65 @@ class TestTpexFetcher:
         assert month == 1
         assert day == 1
 
-    def test_adapter(self):
-        params = self.tpex_init_kwargs.copy()
-        params['enable_fetch_price'] = True
-        object = tpex.TPEXFetcher(**params)
-        assert self.__raise(object.adapter, '20061231') is NotImplementedError
+    def test_adapter_fetch_price(self):
+        obj = copy.deepcopy(self.obj)
+        response = self.__raise(obj.adapter_fetch_price, '20061231')
+        assert response is None
 
-        params = self.tpex_init_kwargs.copy()
-        params['enable_fetch_institutional_investors'] = True
-        object = tpex.TPEXFetcher(**params)
-        assert self.__raise(object.adapter, '20050420') is NotImplementedError
-
-    def test_fetch_price(self):
-        time.sleep(self.SLEEP_SECOND)
-        data = self.obj._price_20070101_20070630('20070105')
-        assert data['4303'] == [
-            '4303', '信立', '2.95', '2.95', '2.72', '2.72', '847000', '134', '2365010'
-        ]
-
-        time.sleep(self.SLEEP_SECOND)
-        data = self.obj._price_20070701_now('20070702')
-        assert data['4303'] == [
-            '4303', '信立', '2.57', '2.57', '2.57', '2.57', '2013000', '178', '5173410'
-        ]
-
-        time.sleep(self.SLEEP_SECOND)
-        data = self.obj._price_20070701_now('20200102')
-        assert data['5274'] == [
-            '5274', '信驊', '968.00', '984.00', '959.00', '970.00', '205000', '202', '198885000'
-        ]
-
-    def test_fetch_institutional_investors(self):
-        time.sleep(self.SLEEP_SECOND)
-        data = self.obj._institutional_investors_20050421_20141130('20070426')
-        assert data['3227'] == [
-            '970000', '779000', '191000', '3000', '54000', '-51000', '9000', '147000', '-138000', '2000'
-        ]
-
-        time.sleep(self.SLEEP_SECOND)
-        data = self.obj._institutional_investors_20141201_now('20200102')
-        assert data['3227'] == [
-            '370000', '187000', '183000', '0', '0', '0', '205000', '293000', '-88000', '95000'
-        ]
-
-    def test_fetch_credit_transactions_securities(self):
-        response = self.__raise(self.obj._credit_transactions_securities_20030801_20061231, '20061231')
+        obj._enable_fetch_price = True
+        response = self.__raise(obj.adapter_fetch_price, '20061231')
         assert response is NotImplementedError
 
-        time.sleep(self.SLEEP_SECOND)
-        data = self.obj._credit_transactions_securities_20070101_now('20200102')
-        assert data['3227'] == [
-            '778', '540', '0', '13353', '34301', '60', '40', '0', '1627', '34301', '2', ''
-        ]
+        response = self.__raise(obj.adapter_fetch_price, '20070101')
+        assert response is HolidayWarning
+
+        data = obj.adapter_fetch_price('20070102')
+        assert data['5483'] == ['5483', '中美晶', '94.90', '95.00', '92.00', '92.30', '4784000', '2193', '445753600']
+
+        response = self.__raise(obj.adapter_fetch_price, '20070701')
+        assert response is HolidayWarning
+
+        data = obj.adapter_fetch_price('20070702')
+        assert data['5483'] == ['5483', '中美晶', '206.50', '216.50', '206.50', '214.50', '6359000', '3611', '1347834500']
+
+    def test_adapter_fetch_institutional_investors(self):
+        obj = copy.deepcopy(self.obj)
+        response = self.__raise(obj.adapter_fetch_institutional_investors, '20070422')
+        assert response is None
+
+        obj._enable_fetch_institutional_investors = True
+        response = self.__raise(obj.adapter_fetch_institutional_investors, '20070422')
+        assert response is NotImplementedError
+
+        data = obj.adapter_fetch_institutional_investors('20070423')
+        assert data['5483'] == ['6000', '1000', '5000', '300000', '125000', '175000', '318000', '30000', '288000', '468000']
+
+        response = self.__raise(obj.adapter_fetch_institutional_investors, '20070429')
+        assert response is HolidayWarning
+
+        data = obj.adapter_fetch_institutional_investors('20141201')
+        assert data['1565'] == ['178491', '133491', '45000', '0', '28000', '-28000', '21000', '7000', '14000', '31000']
+
+        response = self.__raise(obj.adapter_fetch_institutional_investors, '20141207')
+        assert response is HolidayWarning
+
+        data = obj.adapter_fetch_institutional_investors('20180115')
+        assert data['5274'] == ['6000', '23000', '-17000', '40000', '16000', '24000', '1000', '4000', '-3000', '4000']
+
+    def test_adapter_fetch_credit_transactions_securities(self):
+        obj = copy.deepcopy(self.obj)
+        response = self.__raise(obj.adapter_fetch_credit_transactions_securities, '20030731')
+        assert response is None
+
+        obj._enable_fetch_credit_transactions_securities = True
+        response = self.__raise(obj.adapter_fetch_credit_transactions_securities, '20030731')
+        assert response is NotImplementedError
+
+        response = self.__raise(obj.adapter_fetch_credit_transactions_securities, '20030801')
+        assert response is NotImplementedError
+
+        response = self.__raise(obj.adapter_fetch_credit_transactions_securities, '20070101')
+        assert response is HolidayWarning
+
+        data = obj.adapter_fetch_credit_transactions_securities('20070102')
+        assert data['5483'] == ['1845', '2328', '0', '32360', '45890', '3', '202', '1', '1752', '45890', '', '113']

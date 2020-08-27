@@ -64,9 +64,6 @@ class TaiwanStockClient:
             os.mkdir(directrory)
         return directrory
 
-    # def __verify_is_today(self, year, month, day):
-    #     pass
-
     @monitor
     def fetch(self, year: int, month: int, day: int) -> List[Dict]:
         rawdata = list()

@@ -31,9 +31,9 @@ class TPEXFetcher(base.BaseFetcher):
     def adapter(self, date):
         return self.combine(
             date=date,
-            price=self.__adapter_fetch_price(date),
-            institutional_investors=self.__adapter_fetch_institutional_investors(date),
-            credit_transactions_securities=self.__adapter_fetch_credit_transactions_securities(date)
+            price=self.adapter_fetch_price(date),
+            institutional_investors=self.adapter_fetch_institutional_investors(date),
+            credit_transactions_securities=self.adapter_fetch_credit_transactions_securities(date)
         )
 
     def republic_era_datetime(self, date):
@@ -42,42 +42,42 @@ class TPEXFetcher(base.BaseFetcher):
         day = int(date[6:8])
         return year, month, day
 
-    def __adapter_fetch_price(self, date):
+    def adapter_fetch_price(self, date):
         if self._enable_fetch_price:
             sleep(self._sleep_second)
             if date < '20070101':
                 raise NotImplementedError
             elif date <= '20070630':
-                return self._price_20070101_20070630(date)
+                return self.__price_20070101_20070630(date)
             else:
-                return self._price_20070701_now(date)
+                return self.__price_20070701_now(date)
         else:
             return None
 
-    def __adapter_fetch_institutional_investors(self, date):
+    def adapter_fetch_institutional_investors(self, date):
         if self._enable_fetch_institutional_investors:
             sleep(self._sleep_second)
-            if date < '20050421':
+            if date < '20070423':
                 raise NotImplementedError
             elif date <= '20141130':
-                return self._institutional_investors_20050421_20141130(date)
+                return self.__institutional_investors_20070423_20141130(date)
             else:
-                return self._institutional_investors_20141201_now(date)
+                return self.__institutional_investors_20141201_now(date)
         else:
             return None
 
-    def __adapter_fetch_credit_transactions_securities(self, date):
+    def adapter_fetch_credit_transactions_securities(self, date):
         if self._enable_fetch_credit_transactions_securities:
             if date < '20030801':
                 raise NotImplementedError
             elif date <= '20061231':
-                return self._credit_transactions_securities_20030801_20061231(date)
+                return self.__credit_transactions_securities_20030801_20061231(date)
             else:
-                return self._credit_transactions_securities_20070101_now(date)
+                return self.__credit_transactions_securities_20070101_now(date)
         else:
             return None
 
-    def _price_20070101_20070630(self, date):
+    def __price_20070101_20070630(self, date):
         '''
         證券櫃檯買賣中心 上櫃股票每日收盤行情(不含定價)
             - 本資訊自 民國96年1-6月 起開始提供
@@ -143,7 +143,7 @@ class TPEXFetcher(base.BaseFetcher):
             ]
         return data
 
-    def _price_20070701_now(self, date):
+    def __price_20070701_now(self, date):
         '''
         證券櫃檯買賣中心 上櫃股票每日收盤行情(不含定價)
             - 本資訊自民國96年7月起開始提供
@@ -207,12 +207,13 @@ class TPEXFetcher(base.BaseFetcher):
             ]
         return data
 
-    def _institutional_investors_20050421_20141130(self, date):
+    def __institutional_investors_20070423_20141130(self, date):
         '''
         證券櫃檯買賣中心 三大法人買賣明細資訊
             - 本資訊自 民國96年4月21日 至 103年11月30日 開始提供
             - https://www.tpex.org.tw/web/stock/3insti/daily_trade/3itrade.php
-            - 20050421(星期五) 網站無資料
+            - 20070421 (星期六 國定假日)
+            - 20070422 (星期日 國定假日)
         '''
 
         year, month, day = self.republic_era_datetime(date)
@@ -274,7 +275,7 @@ class TPEXFetcher(base.BaseFetcher):
             ]
         return data
 
-    def _institutional_investors_20141201_now(self, date):
+    def __institutional_investors_20141201_now(self, date):
         '''
         證券櫃檯買賣中心 三大法人買賣明細資訊
             -- 本資訊自 民國103年12月01日 起開始提供
@@ -395,10 +396,10 @@ class TPEXFetcher(base.BaseFetcher):
                 ]
             return data
 
-    def _credit_transactions_securities_20030801_20061231(self, date):
+    def __credit_transactions_securities_20030801_20061231(self, date):
         raise NotImplementedError
 
-    def _credit_transactions_securities_20070101_now(self, date):
+    def __credit_transactions_securities_20070101_now(self, date):
         '''
         證券櫃檯買賣中心 上櫃股票融資融券餘額
             - 本資訊自民國96年1月起開始提供
@@ -422,13 +423,13 @@ class TPEXFetcher(base.BaseFetcher):
         )
         try:
             rawdata = resp.json()
-            if rawdata['aaData'] == []:
-                raise HolidayWarning(date)
         except Exception as e:
-            print(e)
+            print(f'--{type(e)}', e)
             print(resp.url)
             print(resp.text)
             raise
+        if rawdata['aaData'] == []:
+            raise HolidayWarning(date)
 
         columns = [
             "代號",

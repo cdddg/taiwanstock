@@ -20,21 +20,22 @@ class TestStockClient:
         assert client.TaiwanStockClient(version='test0.0.1')._version == 'test0.0.1'
 
     def test_fetch_rawdata(self):
+        print('')
         # 每日盤後行情、三大法人買賣超、融資融券餘額
-        # date = [
-        #     (2018, 1, 15),
-        #     (2017, 12, 18),
-        #     (2014, 12, 1),
-        #     (2012, 5, 2),
-        # ]
-        # object = client.TaiwanStockClient(
-        #     enable_fetch_institutional_investors=True,
-        #     enable_fetch_credit_transactions_securities=True
-        # )
-        # for year, month, day in date:
-        #     with open(os.path.join(self.PATH, f'{year}{month:0>2}{day:0>2}.json')) as f:
-        #         time.sleep(3)
-        #         self.__assert(object.fetch(year, month, day), json.load(f))
+        date = [
+            (2018, 1, 15),
+            (2017, 12, 18),
+            (2014, 12, 1),
+            (2012, 5, 2),
+        ]
+        object = client.TaiwanStockClient(
+            enable_fetch_institutional_investors=True,
+            enable_fetch_credit_transactions_securities=True
+        )
+        for year, month, day in date:
+            with open(os.path.join(self.PATH, f'{year}{month:0>2}{day:0>2}.json')) as f:
+                time.sleep(3)
+                self.__assert(object.fetch(year, month, day), json.load(f))
 
         # 每日盤後行情、融資融券餘額
         date = [

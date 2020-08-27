@@ -23,57 +23,50 @@ class TWSEFetcher(BaseFetcher):
         self._enable_fetch_credit_transactions_securities = enable_fetch_credit_transactions_securities
         self._sleep_second = sleep_second
 
-    def adapter(self, date):
-        return self.combine(
-            date=date,
-            price=self.__adapter_fetch_price(date),
-            institutional_investors=self.__adapter_fetch_institutional_investors(date),
-            credit_transactions_securities=self.__adapter_fetch_credit_transactions_securities(date)
-        )
-
     def fetch(self, year: int, month: int, day: int) -> list:
         date = self.check_date_format(f'{year}{month:0>2}{day:0>2}')
         data = self.adapter(date)
         return data
 
-    def get_holidays(self):
-        holidays = []
-        for year in range(2020, 2002 - 1, -1):
-            sleep(1)
-            holidays += self._get_holiday(year)
-        return holidays
+    def adapter(self, date):
+        return self.combine(
+            date=date,
+            price=self.adapter_fetch_price(date),
+            institutional_investors=self.adapter_fetch_institutional_investors(date),
+            credit_transactions_securities=self.adapter_fetch_credit_transactions_securities(date)
+        )
 
-    def __adapter_fetch_price(self, date):
+    def adapter_fetch_price(self, date):
         if self._enable_fetch_price:
             sleep(self._sleep_second)
             if date < '20040211':
                 raise NotImplementedError
             else:
-                return self._price_20040211_now(date)
+                return self.__price_20040211_now(date)
         else:
             return None
 
-    def __adapter_fetch_institutional_investors(self, date):
+    def adapter_fetch_institutional_investors(self, date):
         if self._enable_fetch_institutional_investors:
             sleep(self._sleep_second)
             if date < '20120502':
                 raise NotImplementedError
             else:
-                return self._institutional_investors_20120502_now(date)
+                return self.__institutional_investors_20120502_now(date)
         else:
             return None
 
-    def __adapter_fetch_credit_transactions_securities(self, date):
+    def adapter_fetch_credit_transactions_securities(self, date):
         if self._enable_fetch_credit_transactions_securities:
             sleep(self._sleep_second)
             if date < '20010101':
                 raise NotImplementedError
             else:
-                return self._credit_transactions_securities_20010101_now(date)
+                return self.__credit_transactions_securities_20010101_now(date)
         else:
             return None
 
-    def _price_20040211_now(self, date):
+    def __price_20040211_now(self, date):
         '''
         台灣證券交易所 每日收盤行情
             -- 本資訊自 民國93年2月11日 起提供
@@ -128,20 +121,6 @@ class TWSEFetcher(BaseFetcher):
             if self.verify_stock_id_format(id=sid) is False:
                 continue
 
-            # amplitude = re.findall(
-            #     re.compile(r"<\s*p[^>]*>(.*?)<\s*/\s*p>"),
-            #     row[columns['漲跌(+/-)']]
-            # )
-            # amplitude = '' if amplitude == [] else amplitude[0]
-            # amplitude += row[columns['漲跌價差']]
-
-            # if amplitude == '0.00':
-            #     amplitude_ratio = amplitude
-            # else:
-            #     yesterday_price = float(row[columns['收盤價']]) - float(amplitude)
-            #     amplitude_ratio = float(amplitude) / yesterday_price * 100
-            #     amplitude_ratio = str(round(amplitude_ratio, 2))
-
             data[sid] = [
                 sid,
                 row[columns['證券名稱']],
@@ -155,7 +134,7 @@ class TWSEFetcher(BaseFetcher):
             ]
         return data
 
-    def _institutional_investors_20120502_now(self, date):
+    def __institutional_investors_20120502_now(self, date):
         '''
         台灣證券交易所 三大法人買賣超日報
             -- 本資訊自 民國101年5月2日 起提供
@@ -179,13 +158,16 @@ class TWSEFetcher(BaseFetcher):
 
         data = dict()
         for row in rawdata['data']:
-            if len(row) != len(columns.keys()):
-                raise ConnectionError('get data is empty, need to redownload.')
-
             row = [self.clean(r) for r in row]
             sid = row[columns['證券代號']].replace(',', '')
+
             if self.verify_stock_id_format(id=sid) is False:
                 continue
+            if len(row) != len(columns.keys()):
+                print('--row', row)
+                print('--columns', columns)
+                print('--quantity', len(row), len(columns))
+                raise ConnectionError(f'get data is empty, need to redownload. ({resp.url})')
 
             if date <= '20141130':
                 # "fields": [
@@ -282,7 +264,7 @@ class TWSEFetcher(BaseFetcher):
 
         return data
 
-    def _credit_transactions_securities_20010101_now(self, date):
+    def __credit_transactions_securities_20010101_now(self, date):
         '''
         台灣證券交易所 每日收盤行情
             - 本資訊自民國90年01月01日起提供
@@ -300,12 +282,11 @@ class TWSEFetcher(BaseFetcher):
         try:
             rawdata = resp.json()
         except Exception as e:
-            print(e)
+            print(f'--{type(e)}', e)
             print(resp.url)
             print(resp.text)
             raise
-
-        if rawdata['stat'] == '很抱歉，沒有符合條件的資料!':
+        if len(rawdata['data']) == 0:
             raise HolidayWarning(date)
 
         columns = [
@@ -350,6 +331,13 @@ class TWSEFetcher(BaseFetcher):
                 row[columns['註記']],
             ]
         return data
+
+    def get_holidays(self):
+        holidays = []
+        for year in range(2020, 2002 - 1, -1):
+            sleep(1)
+            holidays += self._get_holiday(year)
+        return holidays
 
     def _get_holiday(self, year):
         republic_era_year = self.republic_era_datetime(str(year))

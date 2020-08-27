@@ -19,8 +19,6 @@ if __name__ == "__main__":
     # 下載json檔
     client.fetch_to_json(today.year, today.month, today.day, overwrite=True)
 
-    exit()
-
     # 下載至sqlite資料庫
     client.fetch_to_sqlite(
         today.year, today.month, today.day,

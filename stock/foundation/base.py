@@ -25,7 +25,8 @@ class BaseFetcher():
             'close',
             'capacity',
             'transaction',
-            'turnover']
+            'turnover'
+        ]
 
     @property
     def institutional_investors_columns(self):
