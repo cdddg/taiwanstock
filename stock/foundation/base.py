@@ -1,22 +1,40 @@
 import datetime
 import itertools
 
+from ..box.constants import StockCategory
 from ..box.exceptions import DateFormatError
 
 
-class BaseFetcher():
+class BaseFetcher:
     HEADERS = {
         'User-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:33.0) Gecko/20100101 Firefox/33.0',
         'Accept-Encoding': 'gzip, deflate, compress'
     }
 
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        proxy_provider,
+        enable_fetch_price,
+        enable_fetch_institutional_investors,
+        enable_fetch_credit_transactions_securities,
+        sleep_second
+    ):
+        self._proxy_provider = proxy_provider
+        self._enable_fetch_price = enable_fetch_price
+        self._enable_fetch_institutional_investors = enable_fetch_institutional_investors
+        self._enable_fetch_credit_transactions_securities = enable_fetch_credit_transactions_securities
+        self._sleep_second = sleep_second
+
+    @property
+    def base_columns(self):
+        return [
+            'date',
+            'category'
+        ]
 
     @property
     def price_columns(self):
         return [
-            'date',
             'sid',
             'name',
             'open',
@@ -74,6 +92,9 @@ class BaseFetcher():
             'note'
         ]
 
+    def get_proxy(self):
+        return self._proxy_provider.get_proxy()
+
     def get_string_date(self, year, month, day):
         return f'{year}{month:0>2}{day:0>2}'
 
@@ -109,6 +130,7 @@ class BaseFetcher():
     def combine(
         self,
         date: str,
+        category: StockCategory,
         price: dict,
         institutional_investors: dict or None,
         credit_transactions_securities: dict or None
@@ -119,10 +141,11 @@ class BaseFetcher():
             if institutional_investors is not None and credit_transactions_securities is not None:
                 result = dict(
                     itertools.zip_longest(
-                        self.price_columns
+                        self.base_columns
+                        + self.price_columns
                         + self.institutional_investors_columns
                         + self.credit_transactions_securities_columns,
-                        [date]
+                        [date, category]
                         + price[id]
                         + institutional_investors.get(id, [])
                         + credit_transactions_securities.get(id, []),
@@ -132,9 +155,10 @@ class BaseFetcher():
             elif institutional_investors is not None:
                 result = dict(
                     itertools.zip_longest(
-                        self.price_columns
+                        self.base_columns
+                        + self.price_columns
                         + self.institutional_investors_columns,
-                        [date]
+                        [date, category]
                         + price[id]
                         + institutional_investors.get(id, []),
                         fillvalue='0'
@@ -143,9 +167,10 @@ class BaseFetcher():
             elif credit_transactions_securities is not None:
                 result = dict(
                     itertools.zip_longest(
-                        self.price_columns
+                        self.base_columns
+                        + self.price_columns
                         + self.credit_transactions_securities_columns,
-                        [date]
+                        [date, category]
                         + price[id]
                         + credit_transactions_securities.get(id, []),
                         fillvalue='0'
@@ -154,8 +179,9 @@ class BaseFetcher():
             else:
                 result = dict(
                     itertools.zip_longest(
-                        self.price_columns,
-                        [date]
+                        self.base_columns
+                        + self.price_columns,
+                        [date, category]
                         + price[id],
                         fillvalue=None
                     )

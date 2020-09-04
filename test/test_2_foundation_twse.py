@@ -1,8 +1,8 @@
 import copy
-import time
 
 from stock.box.exceptions import HolidayWarning
 from stock.foundation import twse
+from stock.proxy import provider
 
 
 class TestTwseFetcher:
@@ -18,6 +18,7 @@ class TestTwseFetcher:
 
     def setup(self):
         self.twse_init_kwargs = {
+            'proxy_provider': provider.NoProxyProvier(),
             'enable_fetch_price': False,
             'enable_fetch_institutional_investors': False,
             'enable_fetch_credit_transactions_securities': False,

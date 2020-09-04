@@ -4,6 +4,7 @@ from time import sleep
 import requests
 from bs4 import BeautifulSoup
 
+from ..box.constants import StockCategory
 from ..box.exceptions import HolidayWarning
 from . import base
 
@@ -13,15 +14,19 @@ class TPEXFetcher(base.BaseFetcher):
 
     def __init__(
         self,
+        proxy_provider,
         enable_fetch_price,
         enable_fetch_institutional_investors,
         enable_fetch_credit_transactions_securities,
         sleep_second
     ):
-        self._enable_fetch_price = enable_fetch_price
-        self._enable_fetch_institutional_investors = enable_fetch_institutional_investors
-        self._enable_fetch_credit_transactions_securities = enable_fetch_credit_transactions_securities
-        self._sleep_second = sleep_second
+        super().__init__(
+            proxy_provider=proxy_provider,
+            enable_fetch_price=enable_fetch_price,
+            enable_fetch_institutional_investors=enable_fetch_institutional_investors,
+            enable_fetch_credit_transactions_securities=enable_fetch_credit_transactions_securities,
+            sleep_second=sleep_second
+        )
 
     def fetch(self, year: int, month: int, day: int) -> list:
         date = self.check_date_format(f'{year}{month:0>2}{day:0>2}')
@@ -31,6 +36,7 @@ class TPEXFetcher(base.BaseFetcher):
     def adapter(self, date):
         return self.combine(
             date=date,
+            category=StockCategory.TPEX.value,
             price=self.adapter_fetch_price(date),
             institutional_investors=self.adapter_fetch_institutional_investors(date),
             credit_transactions_securities=self.adapter_fetch_credit_transactions_securities(date)
@@ -96,6 +102,7 @@ class TPEXFetcher(base.BaseFetcher):
                 'input_date': f'{year}/{month:0>2}/{day:0>2}',
                 'temp_sect': 'AL'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         soup = BeautifulSoup(resp.text, 'lxml')
@@ -162,6 +169,7 @@ class TPEXFetcher(base.BaseFetcher):
                 'se': 'AL',
                 'd': f'{year}/{month:0>2}/{day:0>2}'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         rawdata = resp.json()
@@ -230,6 +238,7 @@ class TPEXFetcher(base.BaseFetcher):
                 'd': f'{year}/{month:0>2}/{day:0>2}',
                 's': '0,asc,0'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         soup = BeautifulSoup(resp.text, 'lxml')
@@ -297,6 +306,7 @@ class TPEXFetcher(base.BaseFetcher):
                 'd': f'{year}/{month:0>2}/{day:0>2}',
                 's': '0,asc'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         rawdata = resp.json()
@@ -419,6 +429,7 @@ class TPEXFetcher(base.BaseFetcher):
                 'd': f'{year}/{month:0>2}/{day:0>2}',
                 's': '0,asc'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         try:

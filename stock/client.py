@@ -9,6 +9,7 @@ import pymysql
 from .box.decorators import monitor
 from .foundation import tpex, twse
 from .orm import adapter, models
+from .proxy import provider
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -45,13 +46,14 @@ class TaiwanStockClient:
     def __init__(
         self,
         version=None,
-        enable_fetch_institutional_investors=False,
-        enable_fetch_credit_transactions_securities=False,
-        sleep_second=3
+        proxy_provider: object = provider.NoProxyProvier(),
+        enable_fetch_institutional_investors: bool = False,
+        enable_fetch_credit_transactions_securities: bool = False,
+        sleep_second: int = 3
     ):
         self._version = version
-
         enable_fetch_price = True
+
         kwargs = locals().copy()
         kwargs.pop('self')
         kwargs.pop('version')
@@ -65,7 +67,7 @@ class TaiwanStockClient:
         return directrory
 
     @monitor
-    def fetch(self, year: int, month: int, day: int) -> List[Dict]:
+    def fetch(self, year: int, month: int, day: int, proxies=None) -> List[Dict]:
         rawdata = list()
         rawdata += self.twse.fetch(year, month, day)
         rawdata += self.tpex.fetch(year, month, day)
@@ -105,21 +107,25 @@ class TaiwanStockClient:
         models.StockMarket.bind(db)
         models.StockMarket.create_table()
 
-        models.StockMarket \
-            .delete() \
-            .where(models.StockMarket.date == f'{year}{month:02}{day:02}') \
-            .execute()
-
         data = self.fetch(year, month, day)
-        rows = []
-        for row in data:
-            sid = row.pop('sid')
-            name = row.pop('name')
-            row['stock_id'] = sid
-            rows += [row]
+        if data:
+            rows = []
+            for row in data:
+                sid = row.pop('sid')
+                name = row.pop('name')
+                row['stock_id'] = sid
+                rows += [row]
 
-            models.StockInfo.get_or_create(id=sid, name=name)
-        models.StockMarket.insert_many(rows).execute()
+                try:
+                    info = models.StockInfo.get_by_id(pk=sid)
+                    if info.name != name:
+                        info.name = name
+                        info.save()
+                except models.StockInfo.DoesNotExist:
+                    models.StockInfo.create(id=sid, name=name)
+
+            models.StockMarket.delete().where(models.StockMarket.date == f'{year}{month:0>2}{day:0>2}').execute()
+            models.StockMarket.insert_many(rows).execute()
         return
 
     def fetch_to_sqlite(self, year: int, month: int, day: int, database_name=None):
@@ -167,3 +173,4 @@ class TaiwanStockClient:
 
 if __name__ == '__main__':
     pass
+    TaiwanStockClient()

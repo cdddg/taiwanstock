@@ -4,6 +4,7 @@ from time import sleep
 
 import requests
 
+from ..box.constants import StockCategory
 from ..box.exceptions import HolidayWarning
 from .base import BaseFetcher
 
@@ -13,15 +14,19 @@ class TWSEFetcher(BaseFetcher):
 
     def __init__(
         self,
+        proxy_provider,
         enable_fetch_price,
         enable_fetch_institutional_investors,
         enable_fetch_credit_transactions_securities,
         sleep_second
     ):
-        self._enable_fetch_price = enable_fetch_price
-        self._enable_fetch_institutional_investors = enable_fetch_institutional_investors
-        self._enable_fetch_credit_transactions_securities = enable_fetch_credit_transactions_securities
-        self._sleep_second = sleep_second
+        super().__init__(
+            proxy_provider=proxy_provider,
+            enable_fetch_price=enable_fetch_price,
+            enable_fetch_institutional_investors=enable_fetch_institutional_investors,
+            enable_fetch_credit_transactions_securities=enable_fetch_credit_transactions_securities,
+            sleep_second=sleep_second
+        )
 
     def fetch(self, year: int, month: int, day: int) -> list:
         date = self.check_date_format(f'{year}{month:0>2}{day:0>2}')
@@ -31,6 +36,7 @@ class TWSEFetcher(BaseFetcher):
     def adapter(self, date):
         return self.combine(
             date=date,
+            category=StockCategory.TWSE.value,
             price=self.adapter_fetch_price(date),
             institutional_investors=self.adapter_fetch_institutional_investors(date),
             credit_transactions_securities=self.adapter_fetch_credit_transactions_securities(date)
@@ -72,6 +78,8 @@ class TWSEFetcher(BaseFetcher):
             -- 本資訊自 民國93年2月11日 起提供
             -- https://www.twse.com.tw/exchangeReport/MI_INDEX
         '''
+        self.get_proxy()
+
         # 本資訊自民國93年2月11日起提供
         resp = requests.get(
             url=urllib.parse.urljoin(self.TWSE_BASE_URL, 'exchangeReport/MI_INDEX'),
@@ -80,18 +88,23 @@ class TWSEFetcher(BaseFetcher):
                 'date': date,
                 'type': 'ALL'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         try:
             rawdata = resp.json()
         except Exception as e:
+            print('-' * 100)
             print(e)
-            print(resp.url)
-            print(resp.text)
+            print('resp.url', resp.url)
+            print('resp.text', resp.text)
+            print()
             raise
 
         if rawdata['stat'] == '很抱歉，沒有符合條件的資料!':
             raise HolidayWarning(date)
+        elif 'fields8' not in rawdata.keys() and 'fields9' not in rawdata.keys():
+            raise ConnectionError(f'get data is empty, need to redownload. ({resp.url})')
 
         index = '9' if 'fields9' in rawdata.keys() else '8'
 
@@ -147,11 +160,15 @@ class TWSEFetcher(BaseFetcher):
                 'date': date,
                 'selectType': 'ALL'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         rawdata = resp.json()
+
         if rawdata['stat'] == '很抱歉，沒有符合條件的資料!':
             raise HolidayWarning(date)
+        elif 'fields' not in rawdata.keys():
+            raise ConnectionError(f'get data is empty, need to redownload. ({resp.url})')
 
         columns = rawdata['fields']
         columns = dict(zip(columns, range(len(columns))))
@@ -164,9 +181,9 @@ class TWSEFetcher(BaseFetcher):
             if self.verify_stock_id_format(id=sid) is False:
                 continue
             if len(row) != len(columns.keys()):
-                print('--row', row)
-                print('--columns', columns)
-                print('--quantity', len(row), len(columns))
+                # print('--row', row)
+                # print('--columns', columns)
+                # print('--quantity', len(row), len(columns))
                 raise ConnectionError(f'get data is empty, need to redownload. ({resp.url})')
 
             if date <= '20141130':
@@ -277,6 +294,7 @@ class TWSEFetcher(BaseFetcher):
                 'date': date,
                 'selectType': 'ALL'
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
         try:
@@ -347,6 +365,7 @@ class TWSEFetcher(BaseFetcher):
                 'response': 'csv',
                 'queryYear': republic_era_year
             },
+            proxies=self.get_proxy(),
             headers=self.HEADERS
         )
 

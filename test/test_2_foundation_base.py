@@ -1,9 +1,16 @@
 from stock.foundation import base
+from stock.proxy import provider
 
 
 class TestBaseFetcher:
     def setup(self):
-        self.obj = base.BaseFetcher()
+        self.obj = base.BaseFetcher(
+            proxy_provider=provider.NoProxyProvier(),
+            enable_fetch_price=True,
+            enable_fetch_institutional_investors=True,
+            enable_fetch_credit_transactions_securities=True,
+            sleep_second=3
+        )
 
     def test_headers(self):
         assert self.obj.HEADERS == {
@@ -12,8 +19,11 @@ class TestBaseFetcher:
         }
 
     def test_columns(self):
-        assert self.obj.price_columns == [
+        assert self.obj.base_columns == [
             'date',
+            'category',
+        ]
+        assert self.obj.price_columns == [
             'sid',
             'name',
             'open',

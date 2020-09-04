@@ -146,3 +146,4 @@ cython_debug/
 *.db
 *script.py
 *.csv
+_setting.json

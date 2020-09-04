@@ -2,6 +2,7 @@ import copy
 
 from stock.foundation import tpex
 from stock.box.exceptions import HolidayWarning
+from stock.proxy import provider
 
 
 class TestTpexFetcher:
@@ -17,6 +18,7 @@ class TestTpexFetcher:
 
     def setup(self):
         self.tpex_init_kwargs = {
+            'proxy_provider': provider.NoProxyProvier(),
             'enable_fetch_price': False,
             'enable_fetch_institutional_investors': False,
             'enable_fetch_credit_transactions_securities': False,
