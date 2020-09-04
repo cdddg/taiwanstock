@@ -8,6 +8,7 @@ if __name__ == "__main__":
 
     # initialize
     client = stock.client.TaiwanStockClient(
+        proxy_provider=stock.proxy.provider.NoProxyProvier(),
         enable_fetch_institutional_investors=True,
         enable_fetch_credit_transactions_securities=True,
     )

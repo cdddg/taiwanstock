@@ -1,11 +1,11 @@
 # 台灣上市上櫃股票爬蟲
 
 | 抓取資料範圍                                     | 抓取支援日期 |
-| ----------------------------------------------- | ------------ |
-| `盤後行情`                                       | 2007/01/01   |
-| `盤後行情` 、 `三大買人買賣超`                   | 2012/05/02   |
-| `盤後行情` 、 `融資融券餘額`                     | 2003/08/01   |
-| `盤後行情` 、 `三大買人買賣超` 、 `融資融券餘額` | 2012/05/02   |
+| ------------------------------------------------ | ------------ |
+| `盤後行情`                                       | `2007/01/01` |
+| `盤後行情` 、 `三大買人買賣超`                   | `2012/05/02` |
+| `盤後行情` 、 `融資融券餘額`                     | `2007/01/01` |
+| `盤後行情` 、 `三大買人買賣超` 、 `融資融券餘額` | `2012/05/02` |
 
 <br>
 
@@ -14,7 +14,11 @@
 ```python
 from . import stock
 
-client = stock.client.TaiwanStockClient()
+client = stock.client.TaiwanStockClient(
+    proxy_provider=stock.proxy.provider.NoProxyProvier(),
+    enable_fetch_institutional_investors=True,
+    enable_fetch_credit_transactions_securities=True,
+)
 print(client.__doc__)
 
 ```
