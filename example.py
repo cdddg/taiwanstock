@@ -2,7 +2,6 @@ import datetime as dt
 
 import stock
 
-
 if __name__ == "__main__":
     today = dt.datetime.now()
 
@@ -21,17 +20,9 @@ if __name__ == "__main__":
     client.fetch_to_json(today.year, today.month, today.day, overwrite=True)
 
     # 下載至sqlite資料庫
-    client.fetch_to_sqlite(
-        today.year, today.month, today.day,
-        'splite.db'
-    )
+    client.fetch_to_sqlite(today.year, today.month, today.day, "splite.db")
 
     # 下載至mysql資料庫
     client.fetch_to_mysql(
-        today.year, today.month, today.day,
-        database_name='',
-        host='',
-        user='',
-        password='',
-        port=None
+        today.year, today.month, today.day, database_name="", host="", user="", password="", port=None
     )

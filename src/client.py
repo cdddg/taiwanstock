@@ -6,16 +6,18 @@ from typing import Dict, List
 
 import pymysql
 
+from .adapter import tpex
+from .adapter import twse
 from .box.decorators import monitor
-from .foundation import tpex, twse
-from .orm import adapter, models
+from .orm import models
+from .orm import SQLFactory
 from .proxy import provider
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class TaiwanStockClient:
-    '''Fetch trading information of Taiwan stocks
+    """Fetch trading information of Taiwan stocks
 
     抓取台股上市上櫃之每日盤後行情及三大法人買賣超
 
@@ -41,7 +43,7 @@ class TaiwanStockClient:
 
         1. 抓取日小於來源網站資訊提供日則 raise NotImplementedError
         2. 抓取日若為國定假日則 print(date is holiday)
-    '''
+    """
 
     def __init__(
         self,
@@ -49,19 +51,19 @@ class TaiwanStockClient:
         proxy_provider: object = provider.NoProxyProvier(),
         enable_fetch_institutional_investors: bool = False,
         enable_fetch_credit_transactions_securities: bool = False,
-        sleep_second: int = 3
+        sleep_second: int = 3,
     ):
         self._version = version
         enable_fetch_price = True
 
         kwargs = locals().copy()
-        kwargs.pop('self')
-        kwargs.pop('version')
+        kwargs.pop("self")
+        kwargs.pop("version")
         self.tpex = tpex.TPEXFetcher(**kwargs)
         self.twse = twse.TWSEFetcher(**kwargs)
 
     def __create_directrory(self):
-        directrory = os.path.join(PATH, 'rawdata')
+        directrory = os.path.join(PATH, "rawdata")
         if not os.path.isdir(directrory):
             os.mkdir(directrory)
         return directrory
@@ -75,31 +77,26 @@ class TaiwanStockClient:
 
     def fetch_to_csv(self, year: int, month: int, day: int, path: str = None, overwrite=True):
         if path is None:
-            path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.csv')
+            path = os.path.join(self.__create_directrory(), f"{year}{month:0>2}{day:0>2}.csv")
 
         if not os.path.isfile(path) or overwrite is True:
             rawdata = self.fetch(year, month, day)
             if rawdata is not None:
-                with open(path, 'w', encoding='utf8', newline='') as f:
+                with open(path, "w", encoding="utf8", newline="") as f:
                     writer = csv.DictWriter(f, fieldnames=rawdata[0].keys())
                     writer.writeheader()
                     writer.writerows(rawdata)
 
     def fetch_to_json(self, year: int, month: int, day: int, path: str = None, overwrite=True):
         if path is None:
-            path = os.path.join(self.__create_directrory(), f'{year}{month:0>2}{day:0>2}.json')
+            path = os.path.join(self.__create_directrory(), f"{year}{month:0>2}{day:0>2}.json")
 
         if not os.path.isfile(path) or overwrite is True:
             rawdata = self.fetch(year, month, day)
             if rawdata is not None:
-                rawdata = {row['sid']: row for row in rawdata}
-                with open(path, 'w', encoding='utf8') as f:
-                    json.dump(
-                        obj=rawdata,
-                        fp=f,
-                        ensure_ascii=False,
-                        indent=4
-                    )
+                rawdata = {row["sid"]: row for row in rawdata}
+                with open(path, "w", encoding="utf8") as f:
+                    json.dump(obj=rawdata, fp=f, ensure_ascii=False, indent=4)
 
     def __bulk_insert(self, db, year, month, day):
         models.StockInfo.bind(db)
@@ -111,9 +108,9 @@ class TaiwanStockClient:
         if data:
             rows = []
             for row in data:
-                sid = row.pop('sid')
-                name = row.pop('name')
-                row['stock_id'] = sid
+                sid = row.pop("sid")
+                name = row.pop("name")
+                row["stock_id"] = sid
                 rows += [row]
 
                 try:
@@ -124,14 +121,12 @@ class TaiwanStockClient:
                 except models.StockInfo.DoesNotExist:
                     models.StockInfo.create(id=sid, name=name)
 
-            models.StockMarket.delete().where(models.StockMarket.date == f'{year}{month:0>2}{day:0>2}').execute()
+            models.StockMarket.delete().where(models.StockMarket.date == f"{year}{month:0>2}{day:0>2}").execute()
             models.StockMarket.insert_many(rows).execute()
         return
 
     def fetch_to_sqlite(self, year: int, month: int, day: int, database_name=None):
-        db = adapter.SQLAdapter.sqlite(
-            **({'database_name': database_name} if database_name else {})
-        )
+        db = SQLFactory.sqlite(**({"database_name": database_name} if database_name else {}))
         self.__bulk_insert(db, year, month, day)
 
     def fetch_to_mysql(self, year: int, month: int, day: int, database_name, host, user, password, port=3306):
@@ -139,38 +134,28 @@ class TaiwanStockClient:
         try:
             conn = pymysql.connect(host=host, user=user, password=password)
             conn.cursor().execute(
-                f'CREATE DATABASE {database_name} default character set utf8mb4 collate utf8mb4_unicode_ci;'
+                f"CREATE DATABASE {database_name} default character set utf8mb4 collate utf8mb4_unicode_ci;"
             )
         except pymysql.err.ProgrammingError:
             pass
         finally:
             conn.close()
 
-        db = adapter.SQLAdapter.mysql(
-            database_name=database_name,
-            host=host,
-            user=user,
-            password=password,
-            port=port
-        )
+        db = SQLFactory.mysql(database_name=database_name, host=host, user=user, password=password, port=port)
         self.__bulk_insert(db, year, month, day)
 
     def fetch_to_postgresql(self, database_obj):
         raise NotImplementedError
 
     def get_holidays_to_csv(self):
-        with open(os.path.join(PATH, 'box', 'holidays.json'), 'w+') as f:
+        with open(os.path.join(PATH, "box", "holidays.json"), "w+") as f:
             json.dump(
-                obj={
-                    'update': str(datetime.datetime.now()),
-                    'total': self.twse.get_holidays()
-                },
+                obj={"update": str(datetime.datetime.now()), "total": self.twse.get_holidays()},
                 fp=f,
                 ensure_ascii=False,
-                indent=2
+                indent=2,
             )
 
 
-if __name__ == '__main__':
-    pass
+if __name__ == "__main__":
     TaiwanStockClient()

@@ -1,5 +1,4 @@
 import abc
-
 from itertools import cycle
 
 
@@ -34,7 +33,7 @@ class RoundRobinProxiesProvider(ProxyProvider):
     @proxies.setter
     def proxies(self, proxies: list):
         if not isinstance(proxies, list):
-            raise ValueError('Proxies only accept list')
+            raise ValueError("Proxies only accept list")
 
         self._proxies = proxies
         self._proxies_cycle = cycle(proxies)

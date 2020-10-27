@@ -6,7 +6,7 @@ class StockInfo(peewee.Model):
     name = peewee.CharField(max_length=64)
 
     class meta:
-        table_name = 'stock_information'
+        table_name = "stock_information"
 
 
 class StockMarket(peewee.Model):
@@ -47,4 +47,4 @@ class StockMarket(peewee.Model):
     note = peewee.BigIntegerField(null=True)
 
     class meta:
-        table_name = 'stock_market'
+        table_name = "stock_market"
