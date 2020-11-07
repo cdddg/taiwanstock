@@ -41,10 +41,10 @@ class TestStockClient:
 
         # 每日盤後行情、融資融券餘額
         date = [
-            (2007, 1, 1),
-            (2007, 1, 2),
             (2007, 7, 1),
             (2007, 7, 2),
+            (2007, 1, 1),
+            (2007, 1, 2),
         ]
         object = client.TaiwanStockClient(
             enable_fetch_institutional_investors=False, enable_fetch_credit_transactions_securities=True
