@@ -137,4 +137,13 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# IDE
 .vscode
+.vim
+
+# customize
+.DS_Store
+*.db
+*script.py
+*.csv
+_setting.json

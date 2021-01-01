@@ -1,1 +1,6 @@
+PyMySQL==0.10.0
+beautifulsoup4==4.9.1
+flake8==3.8.3
+lxml==4.5.2
+peewee==3.13.3
 requests==2.24.0
