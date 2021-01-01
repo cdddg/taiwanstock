@@ -1,15 +1,10 @@
 # 台灣上市上櫃股票爬蟲
 
-| 抓取資料範圍                                     | 抓取支援日期 |
-| ------------------------------------------------ | ------------ |
-| `盤後行情`                                       | `2007/01/01` |
-| `盤後行情` 、 `三大買人買賣超`                   | `2012/05/02` |
-| `盤後行情` 、 `融資融券餘額`                     | `2007/01/01` |
-| `盤後行情` 、 `三大買人買賣超` 、 `融資融券餘額` | `2012/05/02` |
+![demo](doc/demo.gif)
 
 <br>
 
-**Initialize**
+**Usage**
 
 ```python
 from . import stock
@@ -21,32 +16,20 @@ client = stock.client.TaiwanStockClient(
 )
 print(client.__doc__)
 
-```
 
-**Download csv file**
-
-```python
+# Download csv file
 client.fetch_to_csv(year, month, day)
-```
 
-**Download json file**
-
-```python
+# Download json file
 client.fetch_to_json(year, month, day)
-```
 
-**Insert to Sqlite**
-
-```python
+# Insert to Sqlite
 client.fetch_to_sqlite(
     year, month, day,
     database_name
 )
-```
 
-**Insert to Mysql**
-
-```python
+# Insert to Mysql
 client.fetch_to_mysql(
     year, month, day,
     database_name,
